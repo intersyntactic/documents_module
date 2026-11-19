@@ -1,0 +1,20 @@
+name: is_documents_module
+description: >-
+  intersyntactic's documents module: what a document holds, as types, and
+  pure-Dart readers that turn a file's bytes into one, starting with a Word
+  document's text.
+version: 0.1.0
+repository: https://github.com/intersyntactic/documents_module
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  archive: ^4.6.0
+  path: ^1.9.1
+  xml: ^7.1.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.33.0
