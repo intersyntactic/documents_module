@@ -49,6 +49,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  checked_json:
+    dependency: transitive
+    description:
+      name: checked_json
+      sha256: "6e98ee4c293ee7ed5d1a76411823c7b43aee1fa969b63cb896c519814dbdcfbf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   cli_config:
     dependency: transitive
     description:
@@ -153,6 +161,62 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  is_airlock_api:
+    dependency: "direct main"
+    description:
+      name: is_airlock_api
+      sha256: f5c3286bfe62cf00a683e73a1a918bb1c4bb2ad058795a3b34992829edbafebe
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.13.1"
+  is_content_id:
+    dependency: transitive
+    description:
+      name: is_content_id
+      sha256: "40381247bf99e093eab9951d070ab2b416e526a9639ec85f80179ee26ef35e12"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
+  is_effects:
+    dependency: "direct main"
+    description:
+      name: is_effects
+      sha256: a9bedb77f620bc711fa81a817c7fbfce0028c567a87cfbc63a2a023d9acd74bd
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.0"
+  is_path_confinement:
+    dependency: transitive
+    description:
+      name: is_path_confinement
+      sha256: b09d4b18aa39366b63497117be8adbd9f0cfb987a3eb2db437d053f3bc11ea45
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
+  is_shapes:
+    dependency: transitive
+    description:
+      name: is_shapes
+      sha256: aa5d5f37840ab8a09517bcf7313418bdb6ffab2dea29b3ac06d2e95875f8c2e8
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
+  is_tool:
+    dependency: "direct main"
+    description:
+      name: is_tool
+      sha256: "4555d9c2a191b8b7d64f067c546ccf06abc483b41db69f77b8e97e1b9e1ca8c3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.0"
+  is_tools_api:
+    dependency: "direct main"
+    description:
+      name: is_tools_api
+      sha256: "47a3e7a5741037fd1c774211d560f51be0657a2448929ee5ef2c6c9bd5484117"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   lints:
     dependency: "direct dev"
     description:
