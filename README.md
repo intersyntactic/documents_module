@@ -55,6 +55,35 @@ refused, so a small file can't unzip into gigabytes.
 `.docx`: not a zip, a password-protected document or an old binary `.doc`
 (both start the same way), or a zip with no document body.
 
+## Tools over a channel's files
+
+`listDocuments(files)` and `readDocument(files, byDefault:, atMost:)` are
+the two tools, each an is_tool `ToolHandler`. `files` is a `ChannelFiles`:
+the channel's drive and folder (`GraphId`s, as Graph's `filesFolder` gives
+them) and the sign-in that reads them. Each call is one `Program.fetch`, a
+GET to `graph.microsoft.com` with no body: the listing kept as text, the
+file, addressed by its name in the folder, kept as bytes. A response with
+any other body, or none, is an error saying what Graph answered, never an
+empty document. A name that is not a `.docx` is refused before anything is
+fetched.
+
+What the model is given:
+
+- `listDocumentsSpec` (`list_documents`, no input): a `FolderListing`, read
+  from a Graph `children` page with `FolderListing.fromGraph`, newest
+  first, each item's name, size and when it changed, and whether Graph has
+  more than one page.
+- `readDocumentSpec(byDefault:, atMost:)` (`read_document {name, offset?,
+  maxChars?}`): a `DocumentPassage`, made with `DocumentPassage.read(call,
+  bytes)`. `maxChars`'s default and limit are the host's, shown to the
+  model in the schema. The text comes back in a `TextWindow`, cut after a
+  line break when there is one in the window's second half, ending with
+  a line saying which characters it is and the offset to read on from.
+
+A name is a `DocumentName`: a file in the folder, never a path. The same
+call on the same bytes always gives the same text, since the loop replays a
+tool's result from the record.
+
 ## Trying it on a file
 
 ```sh

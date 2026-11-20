@@ -7,5 +7,10 @@
 /// process and runs on every Flutter target.
 library;
 
+export 'src/channel_files.dart';
+export 'src/document_name.dart';
+export 'src/document_tools.dart';
+export 'src/folder_listing.dart';
 export 'src/has_text.dart';
+export 'src/text_window.dart';
 export 'src/word_document.dart';
