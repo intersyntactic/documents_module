@@ -33,6 +33,29 @@ void main() {
       expect(TextWindow.of('ab😀cd', offset: w.end, maxChars: 3).text, '😀c');
     });
 
+    test('a window of one at an emoji holds the emoji, never nothing', () {
+      final w = TextWindow.of('😀abc', offset: 0, maxChars: 1);
+      expect((w.text, w.end, w.left), ('😀', 2, 3));
+    });
+
+    test('an offset inside an emoji starts at the emoji', () {
+      final w = TextWindow.of('a😀b', offset: 2, maxChars: 5);
+      expect((w.text, w.start), ('😀b', 1));
+    });
+
+    test('a window of one always moves on, emoji or not', () {
+      const whole = 'a😀\n😀😀b\n';
+      var offset = 0;
+      final parts = <String>[];
+      while (offset < whole.length) {
+        final w = TextWindow.of(whole, offset: offset, maxChars: 1);
+        expect(w.end, greaterThan(offset));
+        parts.add(w.text);
+        offset = w.end;
+      }
+      expect(parts.join(), whole);
+    });
+
     test('reading on from end covers the text exactly once', () {
       final whole = [for (var i = 0; i < 40; i++) 'line $i of the report']
           .join('\n');
