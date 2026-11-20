@@ -78,8 +78,8 @@ Result<FolderListing> _listing(String json) {
 /// `read_document` over [files], its `maxChars` [byDefault] and [atMost].
 ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
   ChannelFiles files, {
-  required int byDefault,
-  required int atMost,
+  int byDefault = readDocumentByDefault,
+  int atMost = readDocumentAtMost,
 }) => readDocumentSpec(byDefault: byDefault, atMost: atMost).handledBy((call) {
   if (!call.name.value.toLowerCase().endsWith('.docx')) {
     return Failed(

@@ -75,10 +75,13 @@ What the model is given:
   more than one page.
 - `readDocumentSpec(byDefault:, atMost:)` (`read_document {name, offset?,
   maxChars?}`): a `DocumentPassage`, made with `DocumentPassage.read(call,
-  bytes)`. `maxChars`'s default and limit are the host's, shown to the
-  model in the schema. The text comes back in a `TextWindow`, cut after a
-  line break when there is one in the window's second half, ending with
-  a line saying which characters it is and the offset to read on from.
+  bytes)`. `maxChars` is 20,000 unasked and 100,000 at most, both shown
+  to the model in the schema; a host can pass its own. The text comes
+  back in a `TextWindow`, cut after a line break when there is one in the
+  window's second half, ending with a line saying which characters it is,
+  how far through the document that is, and the offset to read on from.
+  The tool's description asks the model to tell the user how far it read
+  when it answers from only part of a document.
 
 A name is a `DocumentName`: a file in the folder, never a path. The same
 call on the same bytes always gives the same text, since the loop replays a

@@ -29,17 +29,25 @@ final class ReadDocumentCall {
   final int maxChars;
 }
 
-/// `read_document`, its `maxChars` [byDefault] and [atMost], which are the
-/// host's to choose: how much of a report reaches the model unasked.
+/// How many characters `read_document` reads when the model doesn't say:
+/// about 5,000 tokens, a few pages of a report.
+const readDocumentByDefault = 20000;
+
+/// The most characters one `read_document` call may ask for.
+const readDocumentAtMost = 100000;
+
+/// `read_document`, its `maxChars` [byDefault] and [atMost]: how much of a
+/// report reaches the model unasked, and in one call.
 ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
-  required int byDefault,
-  required int atMost,
+  int byDefault = readDocumentByDefault,
+  int atMost = readDocumentAtMost,
 }) => ToolSpec(
   name: 'read_document',
   description:
       "Reads a Word document (.docx) in this channel's files as text, in "
       'light Markdown: at most maxChars characters from offset, and how much '
-      'is left. To read on, call again with the offset it gives.',
+      'is left. To read on, call again with the offset it gives. When you '
+      'answer from only part of a document, tell the user how far you read.',
   input: Input.fields3(
     Field(
       'name',
@@ -97,7 +105,8 @@ final class DocumentPassage {
       (0, 0) => '[The whole of $name, $total characters.]',
       (_, 0) => '[Characters $start to $end of $total of $name: the end.]',
       _ =>
-        '[Characters $start to $end of $total of $name; $left left, '
+        '[Characters $start to $end of $total of $name, '
+            '${end * 100 ~/ total}% of the way through; $left left, '
             'from offset $end.]',
     };
     return window.text.isEmpty ? where : '${window.text}\n\n$where';
