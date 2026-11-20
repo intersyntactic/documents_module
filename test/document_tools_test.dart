@@ -10,6 +10,17 @@ ReadDocumentCall _call(Map<String, Object?> input) =>
     _spec.input.read(JsonObject.of(input));
 
 void main() {
+  test('read_document reads 20,000 characters unasked, 100,000 at most', () {
+    final spec = readDocumentSpec();
+    expect(spec.input.read(JsonObject.of({'name': 'R.docx'})).maxChars, 20000);
+    expect(
+      () => spec.input.read(
+        JsonObject.of({'name': 'R.docx', 'maxChars': 100001}),
+      ),
+      throwsA(isA<JsonFieldException>()),
+    );
+  });
+
   group('TextWindow', () {
     test('the whole text when it fits', () {
       final w = TextWindow.of('abc', offset: 0, maxChars: 10);
@@ -123,9 +134,27 @@ void main() {
         passage.forModel,
         endsWith(
           '[Characters 0 to ${passage.window.end} of ${passage.window.total} '
-          'of Report.docx; ${passage.window.left} left, '
+          'of Report.docx, '
+          '${passage.window.end * 100 ~/ passage.window.total}% of the way '
+          'through; ${passage.window.left} left, '
           'from offset ${passage.window.end}.]',
         ),
+      );
+    });
+
+    test('a first part says how far through it is, as a percentage', () {
+      final passage = DocumentPassage.read(
+        _call({'name': 'Quarters.docx', 'maxChars': 5}),
+        docx(
+          [
+            for (final w in ['aaaa', 'bbbb', 'cccc', 'dddd']) p(r(w)),
+          ].join(),
+        ),
+      );
+      expect(
+        passage.forModel,
+        'aaaa\n\n\n[Characters 0 to 5 of 22 of Quarters.docx, '
+        '22% of the way through; 17 left, from offset 5.]',
       );
     });
 
