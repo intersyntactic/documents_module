@@ -55,12 +55,20 @@ refused, so a small file can't unzip into gigabytes.
 `.docx`: not a zip, a password-protected document or an old binary `.doc`
 (both start the same way), or a zip with no document body.
 
-## Tools over a channel's files
+## Tools over a folder of documents
 
-`listDocuments(files)` and `readDocument(files, byDefault:, atMost:)` are
-the two tools, each an is_tool `ToolHandler`. `files` is a `ChannelFiles`:
-the channel's drive and folder (`GraphId`s, as Graph's `filesFolder` gives
-them) and the sign-in that reads them. Each call is one `Program.fetch`, a
+`listDocuments(folder)` and `readDocument(folder)` are the two tools, each
+an is_tool `ToolHandler`. `folder` is a `DriveFolder`: a SharePoint
+document library and a folder in it (`GraphId`s: the drive's `b!…` id, and
+the folder's item id or `root`), and the name of the sign-in the airlock
+reads it as. A trajectory's starting rules hold it as JSON, and the agent
+loop reads it with `DriveFolder.fromJson`:
+
+```json
+{"drive": "b!Xk3…", "folder": "root", "signIn": "cam-graph"}
+```
+
+Each call is one `Program.fetch`, a
 GET to `graph.microsoft.com` with no body: the listing kept as text, the
 file, addressed by its name in the folder, kept as bytes. A response with
 any other body, or none, is an error saying what Graph answered, never an
@@ -76,7 +84,8 @@ What the model is given:
 - `readDocumentSpec(byDefault:, atMost:)` (`read_document {name, offset?,
   maxChars?}`): a `DocumentPassage`, made with `DocumentPassage.read(call,
   bytes)`. `maxChars` is 20,000 unasked and 100,000 at most, both shown
-  to the model in the schema; a host can pass its own. The text comes
+  to the model in the schema; `readDocument` takes others as `byDefault`
+  and `atMost`. The text comes
   back in a `TextWindow`, cut after a line break when there is one in the
   window's second half, ending with a line saying which characters it is,
   how far through the document that is, and the offset to read on from.

@@ -112,7 +112,7 @@ void main() {
       );
     });
 
-    test('refuses maxChars over the host limit', () {
+    test('refuses maxChars over its limit', () {
       expect(
         () => _call({'name': 'a.docx', 'maxChars': 1001}),
         throwsA(isA<JsonFieldException>()),

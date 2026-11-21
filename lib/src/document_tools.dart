@@ -5,12 +5,12 @@ import 'folder_listing.dart';
 import 'text_window.dart';
 import 'word_document.dart';
 
-/// `list_documents`: what the folder a host gave the tool holds. Takes
-/// nothing; the folder is the host's, never the model's to name.
+/// `list_documents`: what the tool's folder holds. Takes nothing; the
+/// folder comes from the trajectory's starting rules, never the model.
 final listDocumentsSpec = ToolSpec<(), FolderListing>(
   name: 'list_documents',
   description:
-      "Lists the documents in this channel's files: each one's name, size "
+      "Lists the documents in the documents folder: each one's name, size "
       'and when it was last changed, newest first.',
   input: Input.none,
   output: Output((listing) => listing.forModel),
@@ -44,7 +44,7 @@ ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
 }) => ToolSpec(
   name: 'read_document',
   description:
-      "Reads a Word document (.docx) in this channel's files as text, in "
+      'Reads a Word document (.docx) in the documents folder as text, in '
       'light Markdown: at most maxChars characters from offset, and how much '
       'is left. To read on, call again with the offset it gives. When you '
       'answer from only part of a document, tell the user how far you read.',

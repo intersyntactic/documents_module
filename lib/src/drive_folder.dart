@@ -28,35 +28,71 @@ final class GraphId {
 
 final _graphId = RegExp(r'^[A-Za-z0-9!_-]+$');
 
-/// A Teams channel's files: the folder in the channel's SharePoint drive,
-/// as Graph's `filesFolder` gives it, read as [signIn].
-final class ChannelFiles {
-  const ChannelFiles({
+/// A folder in a SharePoint document library, read as [signIn]: what
+/// `list_documents` lists and `read_document` reads from. A trajectory's
+/// starting rules hold one as JSON, `{"drive", "folder", "signIn"}`.
+final class DriveFolder {
+  const DriveFolder({
     required this.drive,
     required this.folder,
     required this.signIn,
   });
 
+  /// [json] as a folder. Throws a [JsonFieldException] naming the field
+  /// that is missing or not a Graph id or sign-in name.
+  factory DriveFolder.fromJson(JsonObject json) => DriveFolder(
+    drive:
+        GraphId.parse(json.string('drive')) ??
+        (throw JsonFieldException('drive', "a Graph drive id, `b!…`")),
+    folder:
+        GraphId.parse(json.string('folder')) ??
+        (throw JsonFieldException('folder', 'a Graph item id, or `root`')),
+    signIn:
+        SignIn.parse(json.string('signIn')) ??
+        (throw JsonFieldException('signIn', 'a sign-in name')),
+  );
+
+  /// The library, as Graph names it: `b!…`.
   final GraphId drive;
+
+  /// The folder's item id in [drive], or `root` for the library's top.
   final GraphId folder;
+
+  /// The sign-in the airlock reads the folder as; a name, never a secret.
   final SignIn signIn;
 
-  String get _folderPath => '/v1.0/drives/$drive/items/$folder';
+  JsonObject toJson() => JsonObject.of({
+    'drive': drive.value,
+    'folder': folder.value,
+    'signIn': signIn.name,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      other is DriveFolder &&
+      other.drive == drive &&
+      other.folder == folder &&
+      other.signIn == signIn;
+
+  @override
+  int get hashCode => Object.hash(drive, folder, signIn);
+
+  String get _path => '/v1.0/drives/$drive/items/$folder';
 }
 
 final _graph = Origin.parse('https://graph.microsoft.com')!;
 
-/// `list_documents` over [files].
-ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
+/// `list_documents` over [folder].
+ToolHandler<(), FolderListing> listDocuments(DriveFolder folder) =>
     listDocumentsSpec.handledBy(
       (_) => Program.fetch.runOrRefusal(
         WebFetch(
           _graph,
           path: WebPath.parse(
-            '${files._folderPath}/children'
+            '${folder._path}/children'
             r'?$select=name,size,lastModifiedDateTime,folder',
           )!,
-          signIn: files.signIn,
+          signIn: folder.signIn,
           keep: BodyToKeep.text,
         ),
         then: (response) => switch (response.body) {
@@ -75,9 +111,9 @@ Result<FolderListing> _listing(String json) {
   }
 }
 
-/// `read_document` over [files], its `maxChars` [byDefault] and [atMost].
+/// `read_document` over [folder], its `maxChars` [byDefault] and [atMost].
 ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
-  ChannelFiles files, {
+  DriveFolder folder, {
   int byDefault = readDocumentByDefault,
   int atMost = readDocumentAtMost,
 }) => readDocumentSpec(byDefault: byDefault, atMost: atMost).handledBy((call) {
@@ -88,13 +124,13 @@ ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
     );
   }
   final path = WebPath.parse(
-    '${files._folderPath}:/${Uri.encodeComponent(call.name.value)}:/content',
+    '${folder._path}:/${Uri.encodeComponent(call.name.value)}:/content',
   );
   if (path == null) {
     return Failed('${call.name} has `..` in it, which no path may carry');
   }
   return Program.fetch.runOrRefusal(
-    WebFetch(_graph, path: path, signIn: files.signIn, keep: BodyToKeep.bytes),
+    WebFetch(_graph, path: path, signIn: folder.signIn, keep: BodyToKeep.bytes),
     then: (response) => switch (response.body) {
       BytesBody(:final bytes) => _passage(call, bytes),
       NoBody() => Failed(_refusal(response)),

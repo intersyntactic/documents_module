@@ -107,7 +107,7 @@ final class _WebDriver implements CarriesOutWebRequests {
   }
 }
 
-final _files = ChannelFiles(
+final _folder = DriveFolder(
   drive: GraphId.parse('b!drive_1')!,
   folder: GraphId.parse('01FOLDER')!,
   signIn: SignIn.parse('cam-graph')!,
@@ -130,6 +130,55 @@ final _files = ChannelFiles(
 }
 
 void main() {
+  group('DriveFolder', () {
+    test('reads back what it writes', () {
+      expect(DriveFolder.fromJson(_folder.toJson()), _folder);
+      expect(_folder.toJson().asUncheckedMap(), {
+        'drive': 'b!drive_1',
+        'folder': '01FOLDER',
+        'signIn': 'cam-graph',
+      });
+    });
+
+    test('takes `root` for the library\'s top folder', () {
+      final top = DriveFolder.fromJson(
+        JsonObject.of({
+          'drive': 'b!drive_1',
+          'folder': 'root',
+          'signIn': 'cam-graph',
+        }),
+      );
+      expect(top.folder.value, 'root');
+    });
+
+    for (final (field, bad) in [
+      ('drive', 'b!drive/../other'),
+      ('folder', '01 FOLDER'),
+      ('signIn', 'Cam Graph'),
+    ]) {
+      test('refuses a $field that could change the path, naming it', () {
+        final json = _folder.toJson().withFields({field: bad});
+        expect(
+          () => DriveFolder.fromJson(json),
+          throwsA(
+            isA<JsonFieldException>().having(
+              (e) => e.message,
+              'message',
+              contains(field),
+            ),
+          ),
+        );
+      });
+    }
+
+    test('refuses a missing field, naming it', () {
+      expect(
+        () => DriveFolder.fromJson(_folder.toJson().without(['folder'])),
+        throwsA(isA<JsonFieldException>()),
+      );
+    });
+  });
+
   group('list_documents', () {
     const page =
         '{"value": [{"name": "Report.docx", "size": 2048, '
@@ -139,7 +188,7 @@ void main() {
       final world = _world(
         const WebResponse(status: 200, body: TextBody(page)),
       );
-      final reply = await listDocuments(_files)
+      final reply = await listDocuments(_folder)
           .reply(JsonObject.of({}), world.crux);
       expect(reply.isError, isFalse);
       expect(
@@ -163,7 +212,7 @@ void main() {
       final world = _world(
         const WebResponse(status: 403, refusedBecause: 'accessDenied'),
       );
-      final reply = await listDocuments(_files)
+      final reply = await listDocuments(_folder)
           .reply(JsonObject.of({}), world.crux);
       expect(
         (reply.isError, reply.forModel),
@@ -175,7 +224,7 @@ void main() {
       final world = _world(
         const WebResponse(status: 200, body: TextBody('{"nope": 1}')),
       );
-      final reply = await listDocuments(_files)
+      final reply = await listDocuments(_folder)
           .reply(JsonObject.of({}), world.crux);
       expect(reply.isError, isTrue);
       expect(reply.forModel, contains('`value`'));
@@ -183,7 +232,7 @@ void main() {
   });
 
   group('read_document', () {
-    final handler = readDocument(_files, byDefault: 1000, atMost: 5000);
+    final handler = readDocument(_folder, byDefault: 1000, atMost: 5000);
     final bytes = Uint8List.fromList(docx(p(r('Findings: none.'))));
 
     test('fetches the file by name as bytes and reads its text', () async {
