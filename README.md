@@ -85,7 +85,7 @@ What the model is given:
 
 A name is a `DocumentName`: a file in the folder, never a path. The same
 call on the same bytes always gives the same text, since the loop replays a
-tool's result from the record.
+tool's result from the logbook.
 
 ## Trying it on a file
 
