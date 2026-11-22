@@ -69,8 +69,8 @@ final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
 /// The logbook and the airlock service in memory: each proposal the crux
 /// writes is read back and considered on [path], and the crux is handed
 /// the result [airlock] kept for it.
-final class _RecordLink implements ProposesActionsThroughTheRecord {
-  _RecordLink(this.path, this.airlock);
+final class _LogbookLink implements ProposesActionsThroughTheRecord {
+  _LogbookLink(this.path, this.airlock);
 
   final Trajectory<String, int> path;
   final _AllowingAirlock airlock;
@@ -81,7 +81,7 @@ final class _RecordLink implements ProposesActionsThroughTheRecord {
     final proposed = EntryId.of(utf8.encode('${_written++}\n$body'));
     switch (ActionProposedByAgentLoop.read(body)) {
       case Rejected(:final why):
-        throw StateError('the crux wrote a proposal the record rejects: $why');
+        throw StateError('the crux wrote a proposal the logbook rejects: $why');
       case final ActionProposedByAgentLoop proposal:
         await path.consider(proposal, proposal.place.step, proposed: proposed);
     }
@@ -125,7 +125,7 @@ final _files = ChannelFiles(
     rules: 'all',
     suit: Suit.parse('suit-1')!,
   );
-  final crux = Crux.through(_RecordLink(path, airlock), turn: 1);
+  final crux = Crux.through(_LogbookLink(path, airlock), turn: 1);
   return (web: web, airlock: airlock, crux: crux);
 }
 
