@@ -8,9 +8,12 @@ import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;
 
-/// Allows every action and keeps each reach it was asked about.
-final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
+/// Allows every action, keeps each reach it was asked about, and keeps each
+/// result as the airlock would write it, by the proposal it answers.
+final class _AllowingAirlock
+    implements DecidesActionsAndWritesToTheLogbook<String, int> {
   final reaches = <Reach>[];
+  final results = <EntryId, Object?>{};
 
   @override
   Future<Decision> decide(
@@ -23,32 +26,54 @@ final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
   }
 
   @override
-  Future<void> recordDecision(AirlockDecisionOnAction<int> decision) async {}
+  Future<void> writeDecision(AirlockDecisionOnAction<int> decision) async {}
 
   @override
-  Future<void> recordResult(
+  Future<void> writeResult(
     AirlockDecisionOnAction<int> decision,
     Outcome<Object?> result, {
     required Object? resultAsJson,
-  }) async {}
+  }) async => results[decision.proposed] = outcomeOfProposedActionToJson(
+    decision.proposed,
+    resultAsJson,
+  );
 
   @override
-  Future<Outcome<({String kind, String body})>> recordedOn(
+  Future<Outcome<({String kind, String body})>> entryOn(
     TrajectoryId trajectory,
     EntryId entry,
-  ) async => const Refused('nothing recorded');
+  ) async => const Refused('no entry in this logbook');
+}
+
+/// The logbook and the airlock service in memory: each proposal the crux
+/// writes is read back and considered on [path], and the crux is handed
+/// the result [airlock] kept for it.
+final class _LogbookLink implements ProposesActionsThroughTheLogbook {
+  _LogbookLink(this.path, this.airlock);
+
+  final Trajectory<String, int> path;
+  final _AllowingAirlock airlock;
+  var _written = 0;
 
   @override
-  Future<Outcome<List<Request>>> replyRequests(
-    TrajectoryId trajectory,
-    EntryId respondsTo,
-    ModelReply reply,
-  ) async => const Refused('no module');
+  Future<EntryId> writeProposal(String body) async {
+    final proposed = EntryId.of(utf8.encode('${_written++}\n$body'));
+    switch (ActionProposedByAgentLoop.read(body)) {
+      case Rejected(:final why):
+        throw StateError('the crux wrote a proposal the logbook rejects: $why');
+      case final ActionProposedByAgentLoop proposal:
+        final action = switch (proposal.place) {
+          ProposedForAnIntent(:final action) => action,
+          final other => throw StateError('a tool proposed at $other'),
+        };
+        await path.consider(proposal, action, proposed: proposed);
+    }
+    return proposed;
+  }
 
   @override
-  Future<Outcome<List<Request>>> trajectoryOpenedRequests(
-    TrajectoryId trajectory,
-  ) async => const Refused('no module');
+  Future<String> outcomeNaming(EntryId proposed) async =>
+      jsonEncode(airlock.results[proposed]);
 }
 
 /// Answers every request with [response], keeping each request.
@@ -76,13 +101,18 @@ final _files = ChannelFiles(
 ) {
   final web = _WebDriver(response);
   final airlock = _AllowingAirlock();
-  final crux = Trajectory<String, int>(
+  final path = Trajectory<String, int>(
     id: TrajectoryId.of(utf8.encode('started')),
     drivers: [web],
     airlock: airlock,
     rules: 'all',
     suit: Suit.parse('suit-1')!,
-  ).at(1);
+  );
+  final crux = Crux.forIntent(
+    _LogbookLink(path, airlock),
+    turn: 1,
+    intent: 0,
+  );
   return (web: web, airlock: airlock, crux: crux);
 }
 
