@@ -8,10 +8,17 @@ import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;
 
-/// Allows every action, keeps each reach it was asked about, and keeps each
-/// result as the airlock would write it, by the proposal it answers.
+/// The drive the channel's files are on, as Graph paths reach it.
+final _drive = PathPrefix.parse('/v1.0/drives/b!drive_1/')!;
+
+/// Allows every action, granting a web fetch under [grant], keeps each reach
+/// it was asked about, and keeps each result as the airlock would write it,
+/// by the proposal it answers.
 final class _AllowingAirlock
     implements DecidesActionsAndWritesToTheLogbook<String, int> {
+  _AllowingAirlock(this.grant);
+
+  final PathPrefix grant;
   final reaches = <Reach>[];
   final results = <EntryId, Object?>{};
 
@@ -22,7 +29,13 @@ final class _AllowingAirlock
     String rules,
   ) async {
     reaches.add(reach);
-    return const Allow(by: DecidedBy.rules);
+    return switch (reach) {
+      FetchesFromWeb() => Allow(
+        by: DecidedBy.rules,
+        grantedPathPrefixes: [grant],
+      ),
+      _ => const Allow.withNoPaths(by: DecidedBy.rules),
+    };
   }
 
   @override
@@ -81,10 +94,12 @@ final class _WebDriver implements CarriesOutWebRequests {
   _WebDriver(this.response);
 
   final WebResponse response;
-  final requests = <Request>[];
+  final requests = <GrantedRequest>[];
 
   @override
-  Future<Outcome<WebResponse>> carryOutWebRequest(Request request) async {
+  Future<Outcome<WebResponse>> carryOutWebRequest(
+    GrantedRequest request,
+  ) async {
     requests.add(request);
     return Ran(response);
   }
@@ -97,10 +112,11 @@ final _files = ChannelFiles(
 );
 
 ({_WebDriver web, _AllowingAirlock airlock, Crux crux}) _world(
-  WebResponse response,
-) {
+  WebResponse response, {
+  PathPrefix? grant,
+}) {
   final web = _WebDriver(response);
-  final airlock = _AllowingAirlock();
+  final airlock = _AllowingAirlock(grant ?? _drive);
   final path = Trajectory<String, int>(
     id: TrajectoryId.of(utf8.encode('started')),
     drivers: [web],
@@ -108,11 +124,7 @@ final _files = ChannelFiles(
     rules: 'all',
     suit: Suit.parse('suit-1')!,
   );
-  final crux = Crux.forIntent(
-    _LogbookLink(path, airlock),
-    turn: 1,
-    intent: 0,
-  );
+  final crux = Crux.forIntent(_LogbookLink(path, airlock), turn: 1, intent: 0);
   return (web: web, airlock: airlock, crux: crux);
 }
 
@@ -133,7 +145,9 @@ void main() {
         reply.forModel,
         '- Report.docx (2 KB, changed 2026-11-19 22:14 UTC)',
       );
-      final request = world.web.requests.single;
+      final granted = world.web.requests.single;
+      expect(granted.grantedPathPrefix, _drive);
+      final request = granted.proposed;
       expect(request.method, Method.get);
       expect(request.origin.toString(), 'https://graph.microsoft.com');
       expect(
@@ -144,6 +158,18 @@ void main() {
       expect(request.signIn?.name, 'cam-graph');
       expect(request.keep, BodyToKeep.text);
       expect(world.airlock.reaches.single, isA<FetchesFromWeb>());
+    });
+
+    test('a grant that does not cover the folder is never sent', () async {
+      final world = _world(
+        const WebResponse(status: 200, body: TextBody(page)),
+        grant: PathPrefix.parse('/v1.0/drives/b!drive_2/')!,
+      );
+      final reply = await listDocuments(_files)
+          .reply(JsonObject.of({}), world.crux);
+      expect(reply.isError, isTrue);
+      expect(reply.forModel, contains('is not under its granted prefix'));
+      expect(world.web.requests, isEmpty);
     });
 
     test('a refusal from Graph is an error, in its words', () async {
@@ -185,13 +211,29 @@ void main() {
         'Findings: none.\n\n'
         '[The whole of Incident report #2.docx, 15 characters.]',
       );
-      final request = world.web.requests.single;
+      final request = world.web.requests.single.proposed;
       expect(
         request.path.value,
         '/v1.0/drives/b!drive_1/items/01FOLDER:/'
         'Incident%20report%20%232.docx:/content',
       );
       expect(request.keep, BodyToKeep.bytes);
+    });
+
+    // Graph addresses a file by name as `01FOLDER:/name:`, one segment
+    // that is not `01FOLDER`, so only a grant of the drive covers a read.
+    test('a grant of the folder alone does not cover a read', () async {
+      final world = _world(
+        WebResponse(status: 200, body: BytesBody(bytes)),
+        grant: PathPrefix.parse('/v1.0/drives/b!drive_1/items/01FOLDER/')!,
+      );
+      final reply = await handler.reply(
+        JsonObject.of({'name': 'Report.docx'}),
+        world.crux,
+      );
+      expect(reply.isError, isTrue);
+      expect(reply.forModel, contains('is not under its granted prefix'));
+      expect(world.web.requests, isEmpty);
     });
 
     test(
