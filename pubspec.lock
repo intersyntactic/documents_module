@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_airlock_api
-      sha256: "266ade242c055ec6efa422f2aab12c4b1b9fa0ef8f484a3615dc052818b7952a"
+      sha256: "2d77633658739c20cf4323883c150d2e6e17f161792b2eba4aaafc5c5c63d97c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.0"
+    version: "0.16.0"
   is_content_id:
     dependency: transitive
     description:
@@ -181,10 +181,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_effects
-      sha256: a9bedb77f620bc711fa81a817c7fbfce0028c567a87cfbc63a2a023d9acd74bd
+      sha256: "5de2d192d33f661173e4a37bbb9fe3877510bacf7a884276134f5bf1ef74704b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.12.0"
+    version: "0.13.0"
   is_path_confinement:
     dependency: transitive
     description:
@@ -205,10 +205,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_tool
-      sha256: "47516757f4bfb4ab29296782c6c8ba00820396d2a365f1fbf9b863919db699de"
+      sha256: a751233be70c3a26c1b822d88ba61de635042715ade57374c86017f5aaf4fd8c
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   is_tools_api:
     dependency: "direct main"
     description:

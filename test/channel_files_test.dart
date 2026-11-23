@@ -10,7 +10,8 @@ import 'word_document_test.dart' show docx, p, r;
 
 /// Allows every action, keeps each reach it was asked about, and keeps each
 /// result as the airlock would write it, by the proposal it answers.
-final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
+final class _AllowingAirlock
+    implements DecidesActionsAndWritesToTheLogbook<String, int> {
   final reaches = <Reach>[];
   final results = <EntryId, Object?>{};
 
@@ -25,10 +26,10 @@ final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
   }
 
   @override
-  Future<void> recordDecision(AirlockDecisionOnAction<int> decision) async {}
+  Future<void> writeDecision(AirlockDecisionOnAction<int> decision) async {}
 
   @override
-  Future<void> recordResult(
+  Future<void> writeResult(
     AirlockDecisionOnAction<int> decision,
     Outcome<Object?> result, {
     required Object? resultAsJson,
@@ -38,38 +39,16 @@ final class _AllowingAirlock implements DecidesAndRecordsActions<String, int> {
   );
 
   @override
-  Future<Outcome<({String kind, String body})>> recordedOn(
+  Future<Outcome<({String kind, String body})>> entryOn(
     TrajectoryId trajectory,
     EntryId entry,
-  ) async => const Refused('nothing recorded');
-
-  @override
-  Future<Outcome<List<Request>>> replyRequests(
-    TrajectoryId trajectory,
-    int place,
-    EntryId respondsTo,
-    ModelReply reply,
-  ) async => const Refused('no module');
-
-  @override
-  Future<Outcome<List<Request>>> trajectoryOpenedRequests(
-    TrajectoryId trajectory,
-    int place,
-  ) async => const Refused('no module');
-
-  @override
-  Future<Outcome<List<Request>>> refusalNoticeRequests(
-    TrajectoryId trajectory,
-    int place,
-    EntryId respondsTo,
-    String why,
-  ) async => const Refused('no module');
+  ) async => const Refused('no entry in this logbook');
 }
 
 /// The logbook and the airlock service in memory: each proposal the crux
 /// writes is read back and considered on [path], and the crux is handed
 /// the result [airlock] kept for it.
-final class _LogbookLink implements ProposesActionsThroughTheRecord {
+final class _LogbookLink implements ProposesActionsThroughTheLogbook {
   _LogbookLink(this.path, this.airlock);
 
   final Trajectory<String, int> path;
@@ -83,7 +62,11 @@ final class _LogbookLink implements ProposesActionsThroughTheRecord {
       case Rejected(:final why):
         throw StateError('the crux wrote a proposal the logbook rejects: $why');
       case final ActionProposedByAgentLoop proposal:
-        await path.consider(proposal, proposal.place.step, proposed: proposed);
+        final action = switch (proposal.place) {
+          ProposedForAnIntent(:final action) => action,
+          final other => throw StateError('a tool proposed at $other'),
+        };
+        await path.consider(proposal, action, proposed: proposed);
     }
     return proposed;
   }
@@ -125,7 +108,11 @@ final _files = ChannelFiles(
     rules: 'all',
     suit: Suit.parse('suit-1')!,
   );
-  final crux = Crux.through(_LogbookLink(path, airlock), turn: 1);
+  final crux = Crux.forIntent(
+    _LogbookLink(path, airlock),
+    turn: 1,
+    intent: 0,
+  );
   return (web: web, airlock: airlock, crux: crux);
 }
 
