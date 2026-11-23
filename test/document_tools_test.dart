@@ -21,6 +21,15 @@ void main() {
     );
   });
 
+  test('read_document will not be built with a default past its most', () {
+    expect(
+      () => readDocumentSpec(byDefault: 2000, atMost: 1000),
+      throwsArgumentError,
+    );
+    expect(() => readDocumentSpec(byDefault: 0), throwsArgumentError);
+    expect(readDocumentSpec(byDefault: 1000, atMost: 1000), isNotNull);
+  });
+
   group('TextWindow', () {
     test('the whole text when it fits', () {
       final w = TextWindow.of('abc', offset: 0, maxChars: 10);

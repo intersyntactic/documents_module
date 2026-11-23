@@ -213,18 +213,18 @@ packages:
     dependency: "direct main"
     description:
       name: is_tool
-      sha256: a433b7a75f80c33bf6d13084d9aad9359ae00e01b68d5328c168e4a239bd2054
+      sha256: f94a781e06246843957ff1e1ddfba69c16e292aaa9601f6a1c8c63db564bf04e
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0"
+    version: "0.7.0"
   is_tools_api:
     dependency: "direct main"
     description:
       name: is_tools_api
-      sha256: "47a3e7a5741037fd1c774211d560f51be0657a2448929ee5ef2c6c9bd5484117"
+      sha256: aecc75bbeee39d3f20ffa2d03ff0c7cae5b56ddf3142391f4396c802c54977f9
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1"
+    version: "0.3.0"
   lints:
     dependency: "direct dev"
     description:
