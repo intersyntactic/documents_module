@@ -37,7 +37,8 @@ const readDocumentByDefault = 20000;
 const readDocumentAtMost = 100000;
 
 /// `read_document`, its `maxChars` [byDefault] and [atMost]: how much of a
-/// report reaches the model unasked, and in one call.
+/// report reaches the model unasked, and in one call. Throws an
+/// [ArgumentError] unless 1 <= [byDefault] <= [atMost].
 ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
   int byDefault = readDocumentByDefault,
   int atMost = readDocumentAtMost,
