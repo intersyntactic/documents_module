@@ -67,6 +67,13 @@ any other body, or none, is an error saying what Graph answered, never an
 empty document. A name that is not a `.docx` is refused before anything is
 fetched.
 
+`files.grantToFetch` is the is_flight_rules `GrantToFetch` both tools need:
+the folder's listing with at most a `$select`, and a file in it by name,
+`…/items/{folder}:/{name}:/content`, going as the sign-in. It is built from
+the same paths the tools fetch, so it can't drift from them. It is for
+whoever writes the rules, at configuration time, for a person to approve; a
+running tool proposes requests and never grants them.
+
 What the model is given:
 
 - `listDocumentsSpec` (`list_documents`, no input): a `FolderListing`, read
