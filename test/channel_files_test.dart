@@ -4,21 +4,26 @@ import 'dart:typed_data';
 import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_documents_module/is_documents_module.dart';
 import 'package:is_effects/is_effects.dart';
+import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;
 
-/// The drive the channel's files are on, as Graph paths reach it.
-final _drive = PathPrefix.parse('/v1.0/drives/b!drive_1/')!;
-
-/// Allows every action, granting a web fetch under [grant], keeps each reach
-/// it was asked about, and keeps each result as the airlock would write it,
-/// by the proposal it answers.
-final class _AllowingAirlock
+/// Decides a web fetch by flight rules holding only [grant], as the airlock
+/// would, and allows anything else; keeps each reach it was asked about,
+/// and each result as the airlock would write it, by the proposal it
+/// answers.
+final class _AirlockGranting
     implements DecidesActionsAndWritesToTheLogbook<String, int> {
-  _AllowingAirlock(this.grant);
+  _AirlockGranting(GrantToFetch grant)
+    : _rules = WhatMayLeaveThisMachine(
+        modelSignInsCallsMayGoOutAs: const [],
+        fetchesMayReach: [grant],
+        webRequestsMayReach: const [],
+        programsNetwork: ProgramsNetwork.noNetworkOfTheirOwn,
+      );
 
-  final PathPrefix grant;
+  final WhatMayLeaveThisMachine _rules;
   final reaches = <Reach>[];
   final results = <EntryId, Object?>{};
 
@@ -29,13 +34,22 @@ final class _AllowingAirlock
     String rules,
   ) async {
     reaches.add(reach);
-    return switch (reach) {
-      FetchesFromWeb() => Allow(
-        by: DecidedBy.rules,
-        grantedPathPrefixes: [grant],
-      ),
-      _ => const Allow.withNoPaths(by: DecidedBy.rules),
-    };
+    if (reach is! FetchesFromWeb) {
+      return const Allow.withNoPaths(by: DecidedBy.rules);
+    }
+    final granted = _rules.fetchGrantFor(
+      reach.origin,
+      reach.path,
+      reach.signIn,
+      leasedNow: const {},
+      pooled: const {},
+    );
+    return granted == null
+        ? Deny('no grant reaches ${reach.path}', by: DecidedBy.rules)
+        : Allow(
+            by: DecidedBy.rules,
+            grantedPathPrefixes: [granted.grantedPathPrefix],
+          );
   }
 
   @override
@@ -65,7 +79,7 @@ final class _LogbookLink implements ProposesActionsThroughTheLogbook {
   _LogbookLink(this.path, this.airlock);
 
   final Trajectory<String, int> path;
-  final _AllowingAirlock airlock;
+  final _AirlockGranting airlock;
   var _written = 0;
 
   @override
@@ -111,12 +125,21 @@ final _files = ChannelFiles(
   signIn: SignIn.parse('cam-graph')!,
 );
 
-({_WebDriver web, _AllowingAirlock airlock, Crux crux}) _world(
+/// The channel files in [folder] on [_files]' drive, read as [signIn].
+ChannelFiles _filesIn(String folder, {String signIn = 'cam-graph'}) =>
+    ChannelFiles(
+      drive: _files.drive,
+      folder: GraphId.parse(folder)!,
+      signIn: SignIn.parse(signIn)!,
+    );
+
+/// A world whose rules hold [grant], by default the one [_files] gives.
+({_WebDriver web, _AirlockGranting airlock, Crux crux}) _world(
   WebResponse response, {
-  PathPrefix? grant,
+  GrantToFetch? grant,
 }) {
   final web = _WebDriver(response);
-  final airlock = _AllowingAirlock(grant ?? _drive);
+  final airlock = _AirlockGranting(grant ?? _files.grantToFetch);
   final path = Trajectory<String, int>(
     id: TrajectoryId.of(utf8.encode('started')),
     drivers: [web],
@@ -146,7 +169,10 @@ void main() {
         '- Report.docx (2 KB, changed 2026-11-19 22:14 UTC)',
       );
       final granted = world.web.requests.single;
-      expect(granted.grantedPathPrefix, _drive);
+      expect(
+        granted.grantedPathPrefix.value,
+        '/v1.0/drives/b!drive_1/items/01FOLDER/',
+      );
       final request = granted.proposed;
       expect(request.method, Method.get);
       expect(request.origin.toString(), 'https://graph.microsoft.com');
@@ -160,15 +186,25 @@ void main() {
       expect(world.airlock.reaches.single, isA<FetchesFromWeb>());
     });
 
-    test('a grant that does not cover the folder is never sent', () async {
+    test('another folder\'s grant is never sent', () async {
       final world = _world(
         const WebResponse(status: 200, body: TextBody(page)),
-        grant: PathPrefix.parse('/v1.0/drives/b!drive_2/')!,
+        grant: _filesIn('01OTHER').grantToFetch,
       );
       final reply = await listDocuments(_files)
           .reply(JsonObject.of({}), world.crux);
       expect(reply.isError, isTrue);
-      expect(reply.forModel, contains('is not under its granted prefix'));
+      expect(world.web.requests, isEmpty);
+    });
+
+    test('a grant to another sign-in is never sent', () async {
+      final world = _world(
+        const WebResponse(status: 200, body: TextBody(page)),
+        grant: _filesIn('01FOLDER', signIn: 'other-graph').grantToFetch,
+      );
+      final reply = await listDocuments(_files)
+          .reply(JsonObject.of({}), world.crux);
+      expect(reply.isError, isTrue);
       expect(world.web.requests, isEmpty);
     });
 
@@ -211,7 +247,13 @@ void main() {
         'Findings: none.\n\n'
         '[The whole of Incident report #2.docx, 15 characters.]',
       );
-      final request = world.web.requests.single.proposed;
+      final granted = world.web.requests.single;
+      expect(
+        granted.grantedPathPrefix.value,
+        '/v1.0/drives/b!drive_1/items/01FOLDER:/'
+        'Incident%20report%20%232.docx:/',
+      );
+      final request = granted.proposed;
       expect(
         request.path.value,
         '/v1.0/drives/b!drive_1/items/01FOLDER:/'
@@ -220,20 +262,27 @@ void main() {
       expect(request.keep, BodyToKeep.bytes);
     });
 
-    // Graph addresses a file by name as `01FOLDER:/name:`, one segment
-    // that is not `01FOLDER`, so only a grant of the drive covers a read.
-    test('a grant of the folder alone does not cover a read', () async {
+    test('another folder\'s grant never sends a read', () async {
       final world = _world(
         WebResponse(status: 200, body: BytesBody(bytes)),
-        grant: PathPrefix.parse('/v1.0/drives/b!drive_1/items/01FOLDER/')!,
+        grant: _filesIn('01OTHER').grantToFetch,
       );
       final reply = await handler.reply(
         JsonObject.of({'name': 'Report.docx'}),
         world.crux,
       );
       expect(reply.isError, isTrue);
-      expect(reply.forModel, contains('is not under its granted prefix'));
       expect(world.web.requests, isEmpty);
+    });
+
+    test('a name with a `/` is refused before it is fetched', () async {
+      final world = _world(WebResponse(status: 200, body: BytesBody(bytes)));
+      final reply = await handler.reply(
+        JsonObject.of({'name': 'sub/Report.docx'}),
+        world.crux,
+      );
+      expect(reply.isError, isTrue);
+      expect(world.airlock.reaches, isEmpty);
     });
 
     test(
@@ -295,6 +344,28 @@ void main() {
       );
       expect(reply.isError, isTrue);
       expect(world.web.requests, isEmpty);
+    });
+  });
+
+  group('grantToFetch', () {
+    test('spells the two routes on the wire, read back the same', () {
+      final grant = _files.grantToFetch;
+      final json = grant.toJson();
+      expect(JsonObject.decode(jsonEncode(json)).raw('from'), {
+        'kind': 'pathsMatching',
+        'origin': 'https://graph.microsoft.com',
+        'patterns': unorderedEquals([
+          {
+            'path': '/v1.0/drives/b!drive_1/items/01FOLDER/children',
+            'optionsTakingWordLists': [r'$select'],
+          },
+          {
+            'path': '/v1.0/drives/b!drive_1/items/01FOLDER:/{name}:/content',
+            'optionsTakingWordLists': <String>[],
+          },
+        ]),
+      });
+      expect(GrantToFetch.fromJson(json, 'grant'), grant);
     });
   });
 }

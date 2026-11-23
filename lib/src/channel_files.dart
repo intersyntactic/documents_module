@@ -1,5 +1,6 @@
 import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_effects/is_effects.dart';
+import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:is_tool/is_tool.dart';
 
 import 'document_tools.dart';
@@ -41,10 +42,28 @@ final class ChannelFiles {
   final GraphId folder;
   final SignIn signIn;
 
+  /// The grant the rules give both tools: the folder's listing with at most
+  /// a `$select`, and a file in it by name, as [signIn]. Built from the
+  /// same paths the tools fetch, for whoever writes the rules.
+  GrantToFetch get grantToFetch => GrantToFetch(
+    FromPathsMatching.of(_graph, [
+      PathPattern.parse(_listingPath, optionsTakingWordLists: [_select])!,
+      PathPattern.parse(_filePath('{name}'))!,
+    ])!,
+    GoesAsSignIn(signIn),
+  );
+
   String get _folderPath => '/v1.0/drives/$drive/items/$folder';
+
+  String get _listingPath => '$_folderPath/children';
+
+  /// The file named by [segment], one path segment, already encoded.
+  String _filePath(String segment) => '$_folderPath:/$segment:/content';
 }
 
 final _graph = Origin.parse('https://graph.microsoft.com')!;
+
+final _select = QueryOptionName.parse(r'$select')!;
 
 /// `list_documents` over [files].
 ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
@@ -53,8 +72,8 @@ ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
         WebFetch(
           _graph,
           path: WebPath.parse(
-            '${files._folderPath}/children'
-            r'?$select=name,size,lastModifiedDateTime,folder',
+            '${files._listingPath}'
+            '?${_select.value}=name,size,lastModifiedDateTime,folder',
           )!,
           signIn: files.signIn,
           keep: BodyToKeep.text,
@@ -88,7 +107,7 @@ ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
     );
   }
   final path = WebPath.parse(
-    '${files._folderPath}:/${Uri.encodeComponent(call.name.value)}:/content',
+    files._filePath(Uri.encodeComponent(call.name.value)),
   );
   if (path == null) {
     return Failed('${call.name} has `..` in it, which no path may carry');
