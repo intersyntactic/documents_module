@@ -109,7 +109,7 @@ const _shownFields = ['name', 'size', 'lastModifiedDateTime', 'folder'];
 /// `list_documents` over [files].
 ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
     listDocumentsSpec.handledBy(
-      (_) => Program.fetch.runOrRefusal(
+      (_) => Program.fetch.runOrFail(
         WebFetch(
           _graph,
           path: files._listingRequest,
@@ -150,7 +150,7 @@ ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
   if (path == null) {
     return Failed('${call.name} has `..` in it, which no path may carry');
   }
-  return Program.fetch.runOrRefusal(
+  return Program.fetch.runOrFail(
     WebFetch(_graph, path: path, signIn: files.signIn, keep: BodyToKeep.bytes),
     then: (response) => switch (response.body) {
       BytesBody(:final bytes) => _passage(call, bytes),

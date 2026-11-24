@@ -70,7 +70,7 @@ final class _AirlockGranting
   Future<Outcome<({String kind, String body})>> entryOn(
     TrajectoryId trajectory,
     EntryId entry,
-  ) async => const Refused('no entry in this logbook');
+  ) async => const NothingRan('no entry in this logbook');
 }
 
 /// The logbook and the airlock service in memory: each proposal the crux
