@@ -181,10 +181,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_effects
-      sha256: "9ef281201ea68859bca4bb2afa5b20ecc76250ede4d186751b734679b5c33e16"
+      sha256: "0b322e4efe7313479b09121b44c8d49dbf3f0794a9a46da41efcd8cefa937ab7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.1"
+    version: "0.14.3"
   is_flight_rules:
     dependency: "direct main"
     description:
@@ -209,22 +209,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.0"
+  is_sign_in_vocabulary:
+    dependency: transitive
+    description:
+      name: is_sign_in_vocabulary
+      sha256: dfffa15f57f7fb076e89aca0d27e33def3b2786efa730ee0c6cbca5473aefb15
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   is_tool:
     dependency: "direct main"
     description:
       name: is_tool
-      sha256: f94a781e06246843957ff1e1ddfba69c16e292aaa9601f6a1c8c63db564bf04e
+      sha256: "411f15350d4d9dc082ab82b454703dac57fc6bcf278091ae90c7a2b417a1ade1"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.0"
+    version: "0.8.0"
   is_tools_api:
     dependency: "direct main"
     description:
       name: is_tools_api
-      sha256: aecc75bbeee39d3f20ffa2d03ff0c7cae5b56ddf3142391f4396c802c54977f9
+      sha256: "9d330a9c80eae3b88d71322d0981d0d0c6483a2fcdd1d5f4f6452fba2dc7daf9"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.0"
+  is_web_address_vocabulary:
+    dependency: transitive
+    description:
+      name: is_web_address_vocabulary
+      sha256: "232241a06a2871213e110f52f01c8c68b6c98fdcdf00fcfb491c8e24d10d8dac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   lints:
     dependency: "direct dev"
     description:
