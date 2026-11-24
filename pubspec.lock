@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_airlock_api
-      sha256: "239bd3fe6f471582df2c3a12bc5cc98d8bf4bd3d812c7c63d4b88b03a03e891c"
+      sha256: cd4f08e4e838ef2fa28521049640dab17aed337bee9cdaea363a9a1881baa21c
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.0"
+    version: "0.18.1"
   is_content_id:
     dependency: transitive
     description:
@@ -181,18 +181,26 @@ packages:
     dependency: "direct main"
     description:
       name: is_effects
-      sha256: "0b322e4efe7313479b09121b44c8d49dbf3f0794a9a46da41efcd8cefa937ab7"
+      sha256: bea7444e36b51bf749b2fa0fc3e69a7f9d49b657475e6be5f792d3d046c9175c
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.3"
+    version: "0.15.0"
   is_flight_rules:
     dependency: "direct main"
     description:
       name: is_flight_rules
-      sha256: "45e0d210466b8d435f42f53077123cf4553a95a8acfef8ac783e6ebbddd47cab"
+      sha256: "04b39990e3a0d1d7c5034d4306c8f39514f23690990f68cba1546eb85e1c76ac"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0"
+    version: "0.6.1"
+  is_model_vocabulary:
+    dependency: transitive
+    description:
+      name: is_model_vocabulary
+      sha256: "48927abc9d91422f92e370dc8a7698a2ee29c4bfa44712f5e88c9ab126185e57"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   is_path_confinement:
     dependency: transitive
     description:
@@ -221,10 +229,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_tool
-      sha256: "411f15350d4d9dc082ab82b454703dac57fc6bcf278091ae90c7a2b417a1ade1"
+      sha256: bb843fe23ad47af4b3fb268594d524645d9e90ca28b6c4ceae6e455bbc18f00c
       url: "https://pub.dev"
     source: hosted
-    version: "0.8.0"
+    version: "0.9.0"
   is_tools_api:
     dependency: "direct main"
     description:
@@ -237,10 +245,10 @@ packages:
     dependency: transitive
     description:
       name: is_web_address_vocabulary
-      sha256: "232241a06a2871213e110f52f01c8c68b6c98fdcdf00fcfb491c8e24d10d8dac"
+      sha256: a0b58425fc7eaf98e740cdfac614201fa426594fafdf198903e961f0ee4ed6dd
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.1.2"
   lints:
     dependency: "direct dev"
     description:
