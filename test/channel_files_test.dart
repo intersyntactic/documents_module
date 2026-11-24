@@ -5,6 +5,7 @@ import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_documents_module/is_documents_module.dart';
 import 'package:is_effects/is_effects.dart';
 import 'package:is_flight_rules/is_flight_rules.dart';
+import 'package:is_tools_api/is_tools_api.dart';
 import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;
@@ -347,6 +348,90 @@ void main() {
     });
   });
 
+  group('listingTool', () {
+    final tool = _files.listingTool;
+    final fetch = switch (tool.action) {
+      final Fetch fetch => fetch,
+    };
+
+    test('reads back the same from its JSON on the wire', () {
+      final json = JsonObject.decode(jsonEncode(tool.toJson()));
+      final parsed = OneActionTool.parse(json);
+      expect(parsed, isNotNull);
+      expect(jsonEncode(parsed!.toJson()), jsonEncode(tool.toJson()));
+      expect(json.raw('steps'), [
+        'propose',
+        'fetch',
+        'https://graph.microsoft.com',
+        r'/v1.0/drives/b!drive_1/items/01FOLDER/children'
+            r'?$select=name,size,lastModifiedDateTime,folder',
+        'cam-graph',
+      ]);
+    });
+
+    test('takes nothing from the model', () {
+      expect(jsonEncode(tool.input.schema), jsonEncode(Input.none.schema));
+    });
+
+    test('says that it returns only the first page', () {
+      expect(
+        tool.description,
+        endsWith(
+          'Returns the first page only. If the result contains '
+          '@odata.nextLink, the folder has more items than shown.',
+        ),
+      );
+    });
+
+    bool reaches(GrantToFetch grant, WebPath path) => switch (grant.from) {
+      FromPathsMatching(:final patterns) => patterns.any(
+        (pattern) => pattern.prefixMatching(path) != null,
+      ),
+      _ => false,
+    };
+
+    test("fetches a path its own grant matches, and another folder's "
+        "doesn't", () {
+      expect(fetch.origin.toString(), 'https://graph.microsoft.com');
+      expect(fetch.signIn, _files.signIn);
+      expect(reaches(_files.listingGrant, fetch.path), isTrue);
+      expect(reaches(_filesIn('01OTHER').listingGrant, fetch.path), isFalse);
+    });
+
+    test('its grant reaches no file in the folder', () {
+      final file = WebPath.parse(
+        '/v1.0/drives/b!drive_1/items/01FOLDER:/Report.docx:/content',
+      )!;
+      expect(reaches(_files.grantToFetch, file), isTrue);
+      expect(reaches(_files.listingGrant, file), isFalse);
+    });
+
+    test('its grant refuses a listing with no \$select, or any field not '
+        'shown', () {
+      const listing = '/v1.0/drives/b!drive_1/items/01FOLDER/children';
+      expect(reaches(_files.listingGrant, WebPath.parse(listing)!), isFalse);
+      for (final fields in [
+        'name,content.downloadUrl',
+        '*',
+        'name,@microsoft.graph.downloadUrl',
+        'content.*',
+        'name,downloadUrl',
+        'name,webUrl',
+        '',
+      ]) {
+        final path = WebPath.parse(
+          '$listing?\$select=${Uri.encodeQueryComponent(fields)}',
+        )!;
+        expect(reaches(_files.listingGrant, path), isFalse, reason: fields);
+      }
+    });
+
+    test("its grant doesn't reach the drive's root", () {
+      final root = WebPath.parse('/v1.0/drives/b!drive_1/root/children')!;
+      expect(reaches(_files.listingGrant, root), isFalse);
+    });
+  });
+
   group('grantToFetch', () {
     test('spells the two routes on the wire, read back the same', () {
       final grant = _files.grantToFetch;
@@ -357,11 +442,22 @@ void main() {
         'patterns': unorderedEquals([
           {
             'path': '/v1.0/drives/b!drive_1/items/01FOLDER/children',
-            'optionsTakingWordLists': [r'$select'],
+            'queryOptions': [
+              {
+                'name': r'$select',
+                'presence': 'mustCarry',
+                'wordsFrom': unorderedEquals([
+                  'name',
+                  'size',
+                  'lastModifiedDateTime',
+                  'folder',
+                ]),
+              },
+            ],
           },
           {
             'path': '/v1.0/drives/b!drive_1/items/01FOLDER:/{name}:/content',
-            'optionsTakingWordLists': <String>[],
+            'queryOptions': <Object?>[],
           },
         ]),
       });
