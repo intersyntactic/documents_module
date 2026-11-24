@@ -5,10 +5,13 @@ import 'folder_listing.dart';
 import 'text_window.dart';
 import 'word_document.dart';
 
+/// The name of the tool that lists the folder, whichever way it is sent.
+final listDocumentsName = ToolName.of('list_documents');
+
 /// `list_documents`: what the folder a host gave the tool holds. Takes
 /// nothing; the folder is the host's, never the model's to name.
 final listDocumentsSpec = ToolSpec<(), FolderListing>(
-  name: 'list_documents',
+  name: listDocumentsName,
   description:
       "Lists the documents in this channel's files: each one's name, size "
       'and when it was last changed, newest first.',
@@ -43,7 +46,7 @@ ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
   int byDefault = readDocumentByDefault,
   int atMost = readDocumentAtMost,
 }) => ToolSpec(
-  name: 'read_document',
+  name: ToolName.of('read_document'),
   description:
       "Reads a Word document (.docx) in this channel's files as text, in "
       'light Markdown: at most maxChars characters from offset, and how much '
