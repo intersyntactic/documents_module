@@ -68,7 +68,9 @@ empty document. A name that is not a `.docx` is refused before anything is
 fetched.
 
 `files.grantToFetch` is the is_flight_rules `GrantToFetch` both tools need:
-the folder's listing with at most a `$select`, and a file in it by name,
+the folder's listing, which must carry a `$select` of only the fields the
+model is shown (without one, Graph adds a no-sign-in `downloadUrl` to every
+file), and a file in it by name,
 `…/items/{folder}:/{name}:/content`, going as the sign-in. It is built from
 the same paths the tools fetch, so it can't drift from them. It is for
 whoever writes the rules, at configuration time, for a person to approve; a
@@ -93,6 +95,23 @@ What the model is given:
 A name is a `DocumentName`: a file in the folder, never a path. The same
 call on the same bytes always gives the same text, since the loop replays a
 tool's result from the logbook.
+
+## The listing as a tool sent as data
+
+`files.listingTool` is `list_documents` as an is_tools_api `OneActionTool`,
+stage 1 of tools as data: no input, and one `Fetch` of the folder's listing
+as the sign-in, whose JSON the model reads as Graph sent it. Its description
+says it returns the first page only, and that `@odata.nextLink` in the
+result means the folder holds more. `files.listingGrant` is the grant it
+needs and nothing more: the listing, and no file in the folder. Both come
+from the same ids, and the tests check that the tool's path is one its grant
+matches.
+
+```sh
+dart run is_documents_module:listing_rules <drive> <folder> <sign-in>
+```
+
+prints the two as the `givenTools` and `fetchesMayReach` of a rules file.
 
 ## Trying it on a file
 

@@ -2,6 +2,7 @@ import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_effects/is_effects.dart';
 import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:is_tool/is_tool.dart';
+import 'package:is_tools_api/is_tools_api.dart';
 
 import 'document_tools.dart';
 import 'folder_listing.dart';
@@ -42,20 +43,55 @@ final class ChannelFiles {
   final GraphId folder;
   final SignIn signIn;
 
-  /// The grant the rules give both tools: the folder's listing with at most
-  /// a `$select`, and a file in it by name, as [signIn]. Built from the
-  /// same paths the tools fetch, for whoever writes the rules.
+  /// The grant the rules give both tools: the folder's listing with a
+  /// `$select` of the shown fields, and a file in it by name, as [signIn].
+  /// Built from the same paths the tools fetch, for whoever writes the rules.
   GrantToFetch get grantToFetch => GrantToFetch(
     FromPathsMatching.of(_graph, [
-      PathPattern.parse(_listingPath, optionsTakingWordLists: [_select])!,
+      _listingPattern,
       PathPattern.parse(_filePath('{name}'))!,
     ])!,
     GoesAsSignIn(signIn),
   );
 
+  /// The grant [listingTool] needs and nothing more: the folder's listing,
+  /// as [signIn], and no file in it.
+  GrantToFetch get listingGrant => GrantToFetch(
+    FromPathsMatching.of(_graph, [_listingPattern])!,
+    GoesAsSignIn(signIn),
+  );
+
+  /// `list_documents` as a tool sent as data: one fetch of the folder's
+  /// listing as [signIn], whose JSON the model reads as Graph sent it. Its
+  /// path is one [listingGrant] matches.
+  OneActionTool get listingTool => OneActionTool.of(
+    name: 'list_documents',
+    description:
+        "Lists what is in this channel's files, as Microsoft Graph's JSON: "
+        "each item's name, size, when it was last changed, and `folder` "
+        'when it is a folder. Returns the first page only. If the result '
+        'contains @odata.nextLink, the folder has more items than shown.',
+    input: Input.none,
+    action: Fetch(_graph, _listingRequest, signIn),
+  );
+
   String get _folderPath => '/v1.0/drives/$drive/items/$folder';
 
   String get _listingPath => '$_folderPath/children';
+
+  /// The listing, which must name the fields it returns, and only from
+  /// [_shownFields].
+  PathPattern get _listingPattern => PathPattern.parse(
+    _listingPath,
+    queryOptions: {
+      _select: QueryOptionRule.of(QueryOptionPresence.mustCarry, _shownFields)!,
+    },
+  )!;
+
+  /// The listing with only [_shownFields].
+  WebPath get _listingRequest => WebPath.parse(
+    '$_listingPath?${_select.value}=${_shownFields.join(',')}',
+  )!;
 
   /// The file named by [segment], one path segment, already encoded.
   String _filePath(String segment) => '$_folderPath:/$segment:/content';
@@ -65,16 +101,18 @@ final _graph = Origin.parse('https://graph.microsoft.com')!;
 
 final _select = QueryOptionName.parse(r'$select')!;
 
+/// The fields of a listing the model is shown. Without a `$select`, Graph
+/// adds each file's `@microsoft.graph.downloadUrl`: a link anyone holding
+/// it can download the file from, signed in or not.
+const _shownFields = ['name', 'size', 'lastModifiedDateTime', 'folder'];
+
 /// `list_documents` over [files].
 ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
     listDocumentsSpec.handledBy(
       (_) => Program.fetch.runOrRefusal(
         WebFetch(
           _graph,
-          path: WebPath.parse(
-            '${files._listingPath}'
-            '?${_select.value}=name,size,lastModifiedDateTime,folder',
-          )!,
+          path: files._listingRequest,
           signIn: files.signIn,
           keep: BodyToKeep.text,
         ),

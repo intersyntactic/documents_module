@@ -189,10 +189,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_flight_rules
-      sha256: ccca6da45d07ee5689f19707abfe19c1e534fb6636b097a58aa3527d65ee9799
+      sha256: "45e0d210466b8d435f42f53077123cf4553a95a8acfef8ac783e6ebbddd47cab"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.0"
+    version: "0.6.0"
   is_path_confinement:
     dependency: transitive
     description:
