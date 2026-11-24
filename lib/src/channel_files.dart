@@ -65,7 +65,7 @@ final class ChannelFiles {
   /// listing as [signIn], whose JSON the model reads as Graph sent it. Its
   /// path is one [listingGrant] matches.
   OneActionTool get listingTool => OneActionTool.of(
-    name: 'list_documents',
+    name: listDocumentsName,
     description:
         "Lists what is in this channel's files, as Microsoft Graph's JSON: "
         "each item's name, size, when it was last changed, and `folder` "
