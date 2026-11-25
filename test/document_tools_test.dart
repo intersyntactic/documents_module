@@ -24,12 +24,13 @@ void main() {
   test('read_document tells the model what a document loses in reading', () {
     final description = readDocumentSpec().description;
     for (final left in [
-      'Images',
-      'charts',
-      'equations',
-      'comments',
-      'headers',
-      'footers',
+      '[comment c1',
+      '[equation e1]',
+      '[chart ch1]',
+      '[image im1',
+      '[inserted i1',
+      '[deleted d1',
+      'headers and footers',
     ]) {
       expect(description, contains(left));
     }

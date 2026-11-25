@@ -42,10 +42,22 @@ The document as a person reading it sees it now, in light Markdown:
 | A text box | its paragraphs, once, after the paragraph it sits in |
 | A footnote or endnote | `[^1]` where it is referenced, `[^1]: …` after the body, numbered 1, 2, … in the order the body first refers to them; endnotes `[^e1]` |
 | A field (page number, date, cross-reference) | the result Word shows |
+| A comment | `[comment c1 by Priya Raman]` where its balloon is anchored |
+| A tracked insertion not yet accepted | `[inserted i1 by Marcus Bell: approved]` |
+| A tracked deletion not yet accepted | `[deleted d1 by Marcus Bell]` |
+| An equation | `[equation e1]` |
+| An image | `[image im1: <its alt text>]`, or `[image im1]` with none |
+| A chart | `[chart ch1]` |
+| Any of those, or a header or footer | one line at the top: `[Also in this document: 1 header, 1 comment, …]` |
 
-Left out: tracked deletions, hidden text, field instructions, a table of
-contents (it only repeats the headings), formatting, images, and the
-fallback copy Word stores of anything new (`mc:AlternateContent`).
+A part whose content isn't in the text leaves a hole that names it, so a
+reader knows something is there rather than reading past a gap. Each is
+numbered by kind in reading order (`c1`, `c2`, `d1`), as a handle for a
+tool that reads that part.
+
+Left out entirely: hidden text, field instructions, a table of contents (it
+only repeats the headings), formatting, and the fallback copy Word stores of
+anything new (`mc:AlternateContent`).
 
 The parts are found as Office finds them, through the package's
 relationships, not by fixed names. A part that unzips to more than 64 MiB is

@@ -29,18 +29,86 @@ enum WordNote {
   final String marker;
 }
 
+/// A part of a document whose content the text does not hold, in the order
+/// the line at the top lists them. Each one in the body is numbered by
+/// kind, in reading order, behind its handle: `c1`, `d2`, `im1`.
+enum WordPart {
+  header('', 'header', 'headers'),
+  footer('', 'footer', 'footers'),
+  comment('c', 'comment', 'comments'),
+  insertion('i', 'tracked insertion', 'tracked insertions'),
+  deletion('d', 'tracked deletion', 'tracked deletions'),
+  equation('e', 'equation', 'equations'),
+  image('im', 'image', 'images'),
+  chart('ch', 'chart', 'charts');
+
+  const WordPart(this.handle, this.one, this.many);
+
+  final String handle;
+  final String one;
+  final String many;
+}
+
 /// Reads a Word document's parts as the words a person reading it would
 /// see, in light Markdown: `#` for a heading, a list item's own number or
 /// `-`, `|` between a table's cells, and `[^n]` for a note.
 ///
-/// Left out: tracked deletions, hidden text, field instructions, a table of
-/// contents, formatting, and the second copy of anything Word stores twice.
+/// A part whose content is not words, or not yet settled, leaves a hole
+/// that names it and its handle: `[comment c1 by Priya Raman]`,
+/// `[deleted d1 by Marcus Bell]`, `[inserted i1 by Marcus Bell: approved]`,
+/// `[equation e1]`, `[image im1: <alt text>]`, `[chart ch1]`.
+///
+/// Left out: hidden text, field instructions, a table of contents,
+/// formatting, and the second copy of anything Word stores twice.
 final class WordText {
-  WordText({required this.styles, required this.numbering});
+  WordText({
+    required this.styles,
+    required this.numbering,
+    this.commentAuthors = const {},
+  });
 
   final WordStyles styles;
   final WordNumbering numbering;
+
+  /// Each comment's author, by its `w:id`.
+  final Map<String, String> commentAuthors;
+
   final _fields = <_Field>[];
+  final _parts = <WordPart, int>{};
+
+  /// Each comment's author, by its `w:id`, from `comments.xml`.
+  static Map<String, String> authorsOf(XmlDocument? comments) => {
+    for (final comment
+        in comments?.rootElement.wordChildren('comment') ??
+            const <XmlElement>[])
+      if ((comment.wordAttribute('id'), comment.wordAttribute('author')) case (
+        final id?,
+        final author?,
+      ))
+        id: author,
+  };
+
+  /// One line naming each kind of part the text read so far leaves out, or
+  /// null when it leaves none out.
+  String? get alsoInDocument {
+    final counted = [
+      for (final part in WordPart.values)
+        if (_parts[part] case final n? when n > 0)
+          '$n ${n == 1 ? part.one : part.many}',
+    ];
+    return counted.isEmpty
+        ? null
+        : '[Also in this document: ${counted.join(', ')}.]';
+  }
+
+  /// Counts one more [part], and returns its handle, such as `c2`.
+  String _next(WordPart part) {
+    final n = _parts[part] = (_parts[part] ?? 0) + 1;
+    return '${part.handle}$n';
+  }
+
+  static String _by(String? author) =>
+      author == null || author.isEmpty ? '' : ' by $author';
 
   /// Each note's number, by its `w:id`, given in the order the body first
   /// refers to it, as Word numbers them.
@@ -66,8 +134,21 @@ final class WordText {
   /// Read before [notes], which numbers the notes from the references here.
   String body(XmlElement body) {
     _fields.clear();
+    _parts.clear();
     _footnoteNumbers.clear();
     _endnoteNumbers.clear();
+    for (final (part, reference) in [
+      (WordPart.header, 'headerReference'),
+      (WordPart.footer, 'footerReference'),
+    ]) {
+      // Each section names its headers by relationship; one header can
+      // serve several sections, so they are counted once each.
+      final ids = {
+        for (final e in body.descendantElements)
+          if (e.isWord && e.name.local == reference) e.attributeNamed('id'),
+      }..remove(null);
+      if (ids.isNotEmpty) _parts[part] = ids.length;
+    }
     return _join(_blocks(body));
   }
 
@@ -101,7 +182,13 @@ final class WordText {
     WordRole.alternatives => [
       if (e.childElements.firstOrNull case final first?) ..._blocks(first),
     ],
-    WordRole.properties || WordRole.removed => const [],
+    WordRole.properties ||
+    WordRole.removed ||
+    WordRole.deleted ||
+    WordRole.commentReference => const [],
+    WordRole.inserted ||
+    WordRole.drawing ||
+    WordRole.equation ||
     WordRole.row ||
     WordRole.cell ||
     WordRole.run ||
@@ -221,6 +308,49 @@ final class WordText {
         if (_visible) words.write('\n');
       case WordRole.nonBreakingHyphen:
         if (_visible) words.write('-');
+      case WordRole.inserted:
+        final inserted = StringBuffer();
+        for (final child in e.childElements) {
+          _inline(child, inserted, inside);
+        }
+        if (inserted.isNotEmpty) {
+          final handle = _next(WordPart.insertion);
+          words.write(
+            '[inserted $handle${_by(e.wordAttribute('author'))}: $inserted]',
+          );
+        }
+      case WordRole.deleted:
+        if (_visible) {
+          final handle = _next(WordPart.deletion);
+          words.write('[deleted $handle${_by(e.wordAttribute('author'))}]');
+        }
+      case WordRole.commentReference:
+        if (_visible) {
+          final handle = _next(WordPart.comment);
+          final author = commentAuthors[e.wordAttribute('id')];
+          words.write('[comment $handle${_by(author)}]');
+        }
+      case WordRole.equation:
+        if (_visible) words.write('[equation ${_next(WordPart.equation)}]');
+      case WordRole.drawing:
+        final shows = e.descendantNamed('graphicData')?.getAttribute('uri');
+        final alt = e.descendantNamed('docPr')?.getAttribute('descr')?.trim();
+        switch (shows) {
+          case final uri? when uri.endsWith('/picture'):
+            if (_visible) {
+              final handle = _next(WordPart.image);
+              words.write(
+                alt == null || alt.isEmpty
+                    ? '[image $handle]'
+                    : '[image $handle: $alt]',
+              );
+            }
+          case final uri? when uri.endsWith('/chart'):
+            if (_visible) words.write('[chart ${_next(WordPart.chart)}]');
+          default:
+            // A shape or text box: read for the words it holds.
+            children();
+        }
       case WordRole.fieldCharacter:
         _fieldCharacter(e);
       case WordRole.fieldInstruction:

@@ -16,6 +16,7 @@ typedef WordParts = ({
   XmlDocument? numbering,
   XmlDocument? footnotes,
   XmlDocument? endnotes,
+  XmlDocument? comments,
 });
 
 /// What a relationship points at, read from the last segment of its `Type`,
@@ -25,7 +26,8 @@ enum _Related {
   styles,
   numbering,
   footnotes,
-  endnotes;
+  endnotes,
+  comments;
 
   static _Related? parse(String type) =>
       values.asNameMap()[type.substring(type.lastIndexOf('/') + 1)];
@@ -74,6 +76,7 @@ WordParts openWordParts(List<int> bytes) {
     numbering: part(_Related.numbering),
     footnotes: part(_Related.footnotes),
     endnotes: part(_Related.endnotes),
+    comments: part(_Related.comments),
   );
 }
 
