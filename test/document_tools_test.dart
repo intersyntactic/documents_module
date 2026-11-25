@@ -21,6 +21,21 @@ void main() {
     );
   });
 
+  test('read_document tells the model what a document loses in reading', () {
+    final description = readDocumentSpec().description;
+    for (final left in [
+      'Images',
+      'charts',
+      'equations',
+      'comments',
+      'headers',
+      'footers',
+    ]) {
+      expect(description, contains(left));
+    }
+    expect(description, contains('say so when an answer might depend on'));
+  });
+
   test('read_document will not be built with a default past its most', () {
     expect(
       () => readDocumentSpec(byDefault: 2000, atMost: 1000),

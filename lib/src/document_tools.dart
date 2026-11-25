@@ -51,7 +51,10 @@ ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
       "Reads a Word document (.docx) in this folder's files as text, in "
       'light Markdown: at most maxChars characters from offset, and how much '
       'is left. To read on, call again with the offset it gives. When you '
-      'answer from only part of a document, tell the user how far you read.',
+      'answer from only part of a document, tell the user how far you read. '
+      'It keeps headings, lists, tables, footnotes and text boxes. Images, '
+      'charts, equations, comments, headers and footers are not included, '
+      'so say so when an answer might depend on them.',
   input: Input.fields3(
     Field(
       'name',

@@ -91,7 +91,10 @@ What the model is given:
   window's second half, ending with a line saying which characters it is,
   how far through the document that is, and the offset to read on from.
   The tool's description asks the model to tell the user how far it read
-  when it answers from only part of a document.
+  when it answers from only part of a document. It also names what reading
+  leaves out (images, charts, equations, comments, headers and footers),
+  so the model can say an answer may depend on them rather than say they
+  aren't there.
 
 A name is a `DocumentName`: a file in the folder, never a path. The same
 call on the same bytes always gives the same text, since the loop replays a
