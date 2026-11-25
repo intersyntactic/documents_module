@@ -19,8 +19,10 @@ final class WordDocument implements HasText {
     );
     final sections = [
       reader.body(parts.body),
-      if (parts.footnotes case final notes?) reader.notes(notes),
-      if (parts.endnotes case final notes?) reader.notes(notes, marker: 'e'),
+      if (parts.footnotes case final notes?)
+        reader.notes(notes, WordNote.footnote),
+      if (parts.endnotes case final notes?)
+        reader.notes(notes, WordNote.endnote),
     ];
     return WordDocument._(sections.where((s) => s.isNotEmpty).join('\n\n'));
   }
