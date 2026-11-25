@@ -16,12 +16,14 @@ List<int> docx(
   String? styles,
   String? numbering,
   String? footnotes,
+  String? endnotes,
   String main = 'word/document.xml',
 }) {
   final parts = {
     'styles': ?styles,
     'numbering': ?numbering,
     'footnotes': ?footnotes,
+    'endnotes': ?endnotes,
   };
   final archive = Archive()
     ..add(
@@ -292,6 +294,55 @@ void main() {
       ),
       'Rated 2.4 kW[^1]\n\n[^1]: Per the nameplate.',
     );
+  });
+
+  test('notes numbered in the order the body first refers to them, as Word '
+      'shows them, not by their ids', () {
+    String note(String kind, int id, String text) =>
+        '<w:$kind w:id="$id">${p(r(text))}</w:$kind>';
+    String ref(String kind, int id) =>
+        '<w:r><w:${kind}Reference w:id="$id"/></w:r>';
+    expect(
+      read(
+        docx(
+          p(
+            '${r('Rated')}${ref('footnote', 5)}${r(' and fused')}'
+            '${ref('footnote', 2)}${r(' twice')}${ref('footnote', 5)}'
+            '${r('.')}${ref('endnote', 7)}',
+          ),
+          footnotes:
+              '<w:footnotes xmlns:w="$_w">'
+              '${note('footnote', 2, 'Fuse.')}${note('footnote', 5, 'Plate.')}'
+              '${note('footnote', 9, 'Nothing refers to me.')}'
+              '</w:footnotes>',
+          endnotes:
+              '<w:endnotes xmlns:w="$_w">${note('endnote', 7, 'End.')}</w:endnotes>',
+        ),
+      ),
+      'Rated[^1] and fused[^2] twice[^1].[^e1]\n\n'
+      '[^1]: Plate.\n[^2]: Fuse.\n\n'
+      '[^e1]: End.',
+    );
+  });
+
+  group('fixtures', () {
+    String fixture(String name) =>
+        read(File('test/fixtures/$name').readAsBytesSync());
+
+    test('probe.docx: its one footnote is [^1]', () {
+      final text = fixture('probe.docx');
+      expect(text, contains('A footnote here.[^1]'));
+      expect(text, contains('[^1]: MARKER-FOOTNOTE from the intake form.'));
+    });
+
+    test('case_report.docx: its one footnote is [^1]', () {
+      final text = fixture('case_report.docx');
+      expect(
+        text,
+        contains('Distress was measured with a standard questionnaire.[^1]'),
+      );
+      expect(text, contains('[^1]: Kessler K10, administered at intake'));
+    });
   });
 
   test('finds the main part through the relationships, wherever it is', () {

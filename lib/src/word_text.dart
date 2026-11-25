@@ -19,6 +19,16 @@ final class _Field {
 
 final _tableOfContents = RegExp(r'^\s*TOC\b');
 
+/// The two kinds of note, each with the marker its labels start with.
+enum WordNote {
+  footnote(''),
+  endnote('e');
+
+  const WordNote(this.marker);
+
+  final String marker;
+}
+
 /// Reads a Word document's parts as the words a person reading it would
 /// see, in light Markdown: `#` for a heading, a list item's own number or
 /// `-`, `|` between a table's cells, and `[^n]` for a note.
@@ -32,27 +42,53 @@ final class WordText {
   final WordNumbering numbering;
   final _fields = <_Field>[];
 
+  /// Each note's number, by its `w:id`, given in the order the body first
+  /// refers to it, as Word numbers them.
+  final _footnoteNumbers = <String, int>{};
+  final _endnoteNumbers = <String, int>{};
+
   bool get _visible => _fields.every((f) => f.showingResult && !f.hidden);
 
+  Map<String, int> _numbers(WordNote kind) => switch (kind) {
+    WordNote.footnote => _footnoteNumbers,
+    WordNote.endnote => _endnoteNumbers,
+  };
+
+  /// The note's label, such as `[^2]`, numbering it if it is new.
+  String _reference(WordNote kind, XmlElement reference) {
+    final id = reference.wordAttribute('id');
+    if (id == null) return '';
+    final numbers = _numbers(kind);
+    final number = numbers.putIfAbsent(id, () => numbers.length + 1);
+    return '[^${kind.marker}$number]';
+  }
+
+  /// Read before [notes], which numbers the notes from the references here.
   String body(XmlElement body) {
     _fields.clear();
+    _footnoteNumbers.clear();
+    _endnoteNumbers.clear();
     return _join(_blocks(body));
   }
 
   /// Each note in [notes] (`footnotes.xml` or `endnotes.xml`) as
-  /// `[^<marker><id>]: <text>`, one to a line; Word's separators, which
-  /// have a `w:type`, are left out.
-  String notes(XmlDocument notes, {String marker = ''}) {
-    final lines = <String>[];
+  /// `[^<marker><number>]: <text>`, one to a line, in number order. Word's
+  /// separators, which have a `w:type`, and notes the body never refers to
+  /// are left out, as Word shows neither.
+  String notes(XmlDocument notes, WordNote kind) {
+    final texts = <String, String>{};
     for (final note in notes.rootElement.childElements) {
       if (!note.isWord || note.wordAttribute('type') != null) continue;
+      final id = note.wordAttribute('id');
+      if (id == null) continue;
       _fields.clear();
-      final text = _blocks(note).map((b) => b.text).join(' ').trim();
-      if (text.isNotEmpty) {
-        lines.add('[^$marker${note.wordAttribute('id')}]: $text');
-      }
+      texts[id] = _blocks(note).map((b) => b.text).join(' ').trim();
     }
-    return lines.join('\n');
+    return [
+      for (final MapEntry(key: id, value: number) in _numbers(kind).entries)
+        if (texts[id] case final text? when text.isNotEmpty)
+          '[^${kind.marker}$number]: $text',
+    ].join('\n');
   }
 
   List<_Block> _blocks(XmlElement container) => [
@@ -192,9 +228,9 @@ final class WordText {
           field.instruction.write(e.innerText);
         }
       case WordRole.footnoteReference:
-        if (_visible) words.write('[^${e.wordAttribute('id')}]');
+        if (_visible) words.write(_reference(WordNote.footnote, e));
       case WordRole.endnoteReference:
-        if (_visible) words.write('[^e${e.wordAttribute('id')}]');
+        if (_visible) words.write(_reference(WordNote.endnote, e));
       case WordRole.textBox:
         inside.addAll(_blocks(e));
       case WordRole.paragraph:

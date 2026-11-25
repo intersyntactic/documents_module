@@ -40,7 +40,7 @@ The document as a person reading it sees it now, in light Markdown:
 | A table | `\|` between cells, first row the header |
 | A one-column table (a box drawn round paragraphs) | the paragraphs |
 | A text box | its paragraphs, once, after the paragraph it sits in |
-| A footnote or endnote | `[^1]` where it is referenced, `[^1]: …` after the body |
+| A footnote or endnote | `[^1]` where it is referenced, `[^1]: …` after the body, numbered 1, 2, … in the order the body first refers to them; endnotes `[^e1]` |
 | A field (page number, date, cross-reference) | the result Word shows |
 
 Left out: tracked deletions, hidden text, field instructions, a table of
