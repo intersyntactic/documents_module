@@ -55,12 +55,13 @@ refused, so a small file can't unzip into gigabytes.
 `.docx`: not a zip, a password-protected document or an old binary `.doc`
 (both start the same way), or a zip with no document body.
 
-## Tools over a channel's files
+## Tools over a folder's files
 
 `listDocuments(files)` and `readDocument(files, byDefault:, atMost:)` are
-the two tools, each an is_tool `ToolHandler`. `files` is a `ChannelFiles`:
-the channel's drive and folder (`GraphId`s, as Graph's `filesFolder` gives
-them) and the sign-in that reads them. Each call is one `Program.fetch`, a
+the two tools, each an is_tool `ToolHandler`. `files` is a `DriveFolder`:
+one folder in a SharePoint or OneDrive drive, its drive and item ids
+(`GraphId`s) as configured, and the sign-in that reads it, such as an app
+granted that folder through Sites.Selected. Each call is one `Program.fetch`, a
 GET to `graph.microsoft.com` with no body: the listing kept as text, the
 file, addressed by its name in the folder, kept as bytes. A response with
 any other body, or none, is an error saying what Graph answered, never an

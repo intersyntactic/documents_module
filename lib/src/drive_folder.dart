@@ -30,10 +30,10 @@ final class GraphId {
 
 final _graphId = RegExp(r'^[A-Za-z0-9!_-]+$');
 
-/// A Teams channel's files: the folder in the channel's SharePoint drive,
-/// as Graph's `filesFolder` gives it, read as [signIn].
-final class ChannelFiles {
-  const ChannelFiles({
+/// One folder in a SharePoint or OneDrive drive, named by its Graph ids as
+/// configured, and read as [signIn].
+final class DriveFolder {
+  const DriveFolder({
     required this.drive,
     required this.folder,
     required this.signIn,
@@ -67,7 +67,7 @@ final class ChannelFiles {
   OneActionTool get listingTool => OneActionTool.of(
     name: listDocumentsName,
     description:
-        "Lists what is in this channel's files, as Microsoft Graph's JSON: "
+        "Lists what is in this folder's files, as Microsoft Graph's JSON: "
         "each item's name, size, when it was last changed, and `folder` "
         'when it is a folder. Returns the first page only. If the result '
         'contains @odata.nextLink, the folder has more items than shown.',
@@ -107,7 +107,7 @@ final _select = QueryOptionName.parse(r'$select')!;
 const _shownFields = ['name', 'size', 'lastModifiedDateTime', 'folder'];
 
 /// `list_documents` over [files].
-ToolHandler<(), FolderListing> listDocuments(ChannelFiles files) =>
+ToolHandler<(), FolderListing> listDocuments(DriveFolder files) =>
     listDocumentsSpec.handledBy(
       (_) => Program.fetch.runOrFail(
         WebFetch(
@@ -134,7 +134,7 @@ Result<FolderListing> _listing(String json) {
 
 /// `read_document` over [files], its `maxChars` [byDefault] and [atMost].
 ToolHandler<ReadDocumentCall, DocumentPassage> readDocument(
-  ChannelFiles files, {
+  DriveFolder files, {
   int byDefault = readDocumentByDefault,
   int atMost = readDocumentAtMost,
 }) => readDocumentSpec(byDefault: byDefault, atMost: atMost).handledBy((call) {

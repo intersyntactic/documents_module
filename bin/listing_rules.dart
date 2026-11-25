@@ -20,7 +20,7 @@ void main(List<String> args) {
       GraphId.parse(folder),
       SignIn.parse(signIn),
     )) {
-      (final drive?, final folder?, final signIn?) => ChannelFiles(
+      (final drive?, final folder?, final signIn?) => DriveFolder(
         drive: drive,
         folder: folder,
         signIn: signIn,

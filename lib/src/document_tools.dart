@@ -13,7 +13,7 @@ final listDocumentsName = ToolName.of('list_documents');
 final listDocumentsSpec = ToolSpec<(), FolderListing>(
   name: listDocumentsName,
   description:
-      "Lists the documents in this channel's files: each one's name, size "
+      "Lists the documents in this folder's files: each one's name, size "
       'and when it was last changed, newest first.',
   input: Input.none,
   output: Output((listing) => listing.forModel),
@@ -48,7 +48,7 @@ ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
 }) => ToolSpec(
   name: ToolName.of('read_document'),
   description:
-      "Reads a Word document (.docx) in this channel's files as text, in "
+      "Reads a Word document (.docx) in this folder's files as text, in "
       'light Markdown: at most maxChars characters from offset, and how much '
       'is left. To read on, call again with the offset it gives. When you '
       'answer from only part of a document, tell the user how far you read.',
