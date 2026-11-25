@@ -120,15 +120,15 @@ final class _WebDriver implements CarriesOutWebRequests {
   }
 }
 
-final _files = ChannelFiles(
+final _files = DriveFolder(
   drive: GraphId.parse('b!drive_1')!,
   folder: GraphId.parse('01FOLDER')!,
   signIn: SignIn.parse('cam-graph')!,
 );
 
-/// The channel files in [folder] on [_files]' drive, read as [signIn].
-ChannelFiles _filesIn(String folder, {String signIn = 'cam-graph'}) =>
-    ChannelFiles(
+/// The folder [folder] on [_files]' drive, read as [signIn].
+DriveFolder _filesIn(String folder, {String signIn = 'cam-graph'}) =>
+    DriveFolder(
       drive: _files.drive,
       folder: GraphId.parse(folder)!,
       signIn: SignIn.parse(signIn)!,
