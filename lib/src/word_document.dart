@@ -16,14 +16,17 @@ final class WordDocument implements HasText {
     final reader = WordText(
       styles: WordStyles.parse(parts.styles),
       numbering: WordNumbering.parse(parts.numbering),
+      commentAuthors: WordText.authorsOf(parts.comments),
     );
-    final sections = [
-      reader.body(parts.body),
+    final body = reader.body(parts.body);
+    final notes = [
       if (parts.footnotes case final notes?)
         reader.notes(notes, WordNote.footnote),
       if (parts.endnotes case final notes?)
         reader.notes(notes, WordNote.endnote),
     ];
+    // Read last, since the notes can hold parts of their own.
+    final sections = [?reader.alsoInDocument, body, ...notes];
     return WordDocument._(sections.where((s) => s.isNotEmpty).join('\n\n'));
   }
 

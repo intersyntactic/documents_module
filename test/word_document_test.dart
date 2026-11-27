@@ -17,6 +17,7 @@ List<int> docx(
   String? numbering,
   String? footnotes,
   String? endnotes,
+  String? comments,
   String main = 'word/document.xml',
 }) {
   final parts = {
@@ -24,6 +25,7 @@ List<int> docx(
     'numbering': ?numbering,
     'footnotes': ?footnotes,
     'endnotes': ?endnotes,
+    'comments': ?comments,
   };
   final archive = Archive()
     ..add(
@@ -85,17 +87,92 @@ void main() {
     );
   });
 
-  test('reads tracked insertions and leaves out tracked deletions', () {
-    expect(
-      read(
-        docx(
-          p(
-            '${r('The fire began ')}<w:del><w:r><w:delText>upstairs</w:delText></w:r></w:del><w:ins>${r('in the laundry')}</w:ins>',
+  group('parts the text leaves out, each a hole that names it', () {
+    test('a tracked change: the insertion marked with its text, the '
+        'deletion a hole', () {
+      expect(
+        read(
+          docx(
+            p(
+              '${r('The fire began ')}'
+              '<w:del w:author="Marcus Bell"><w:r><w:delText>upstairs</w:delText></w:r></w:del>'
+              '<w:ins w:author="Marcus Bell">${r('in the laundry')}</w:ins>'
+              '${r(' and ')}<w:del><w:r><w:delText>spread</w:delText></w:r></w:del>',
+            ),
           ),
         ),
-      ),
-      'The fire began in the laundry',
-    );
+        '[Also in this document: 1 tracked insertion, 2 tracked deletions.]'
+        '\n\n'
+        'The fire began [deleted d1 by Marcus Bell]'
+        '[inserted i1 by Marcus Bell: in the laundry] and [deleted d2]',
+      );
+    });
+
+    test('a comment, where its balloon is anchored, with its author', () {
+      expect(
+        read(
+          docx(
+            p(
+              '<w:commentRangeStart w:id="4"/>${r('Rated moderate.')}'
+              '<w:commentRangeEnd w:id="4"/>'
+              '<w:r><w:commentReference w:id="4"/></w:r>',
+            ),
+            comments:
+                '<w:comments xmlns:w="$_w">'
+                '<w:comment w:id="4" w:author="Priya Raman">${p(r('Check this.'))}</w:comment>'
+                '</w:comments>',
+          ),
+        ),
+        '[Also in this document: 1 comment.]\n\n'
+        'Rated moderate.[comment c1 by Priya Raman]',
+      );
+    });
+
+    test('an equation, an image with its alt text, and a chart', () {
+      const m = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
+      const wp =
+          'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
+      const a = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+      String drawing(String kind, {String alt = ''}) =>
+          '<w:r><w:drawing><wp:inline xmlns:wp="$wp">'
+          '<wp:docPr id="1" name="x"${alt.isEmpty ? '' : ' descr="$alt"'}/>'
+          '<a:graphic xmlns:a="$a"><a:graphicData uri="$a/../$kind"/></a:graphic>'
+          '</wp:inline></w:drawing></w:r>';
+      expect(
+        read(
+          docx(
+            '${p('${r('Attendance was ')}<m:oMath xmlns:m="$m"><m:r><m:t>a</m:t></m:r></m:oMath>${r('.')}')}'
+            '${p(drawing('picture', alt: 'Family diagram'))}'
+            '${p(drawing('picture'))}'
+            '${p(drawing('chart'))}',
+          ),
+        ),
+        '[Also in this document: 1 equation, 2 images, 1 chart.]\n\n'
+        'Attendance was [equation e1].\n\n'
+        '[image im1: Family diagram]\n\n'
+        '[image im2]\n\n'
+        '[chart ch1]',
+      );
+    });
+
+    test('headers and footers, listed at the top', () {
+      expect(
+        read(
+          docx(
+            '${p(r('Body'))}<w:sectPr>'
+            '<w:headerReference w:type="default" r:id="h1" xmlns:r="$_rel"/>'
+            '<w:headerReference w:type="first" r:id="h2" xmlns:r="$_rel"/>'
+            '<w:footerReference w:type="default" r:id="f1" xmlns:r="$_rel"/>'
+            '</w:sectPr>',
+          ),
+        ),
+        '[Also in this document: 2 headers, 1 footer.]\n\nBody',
+      );
+    });
+
+    test('nothing left out, no line at the top', () {
+      expect(read(docx(p(r('Plain')))), 'Plain');
+    });
   });
 
   test('leaves out hidden text', () {
@@ -328,6 +405,30 @@ void main() {
   group('fixtures', () {
     String fixture(String name) =>
         read(File('test/fixtures/$name').readAsBytesSync());
+
+    test('case_report.docx: each part the text leaves out is named where '
+        'it sits', () {
+      final text = fixture('case_report.docx');
+      expect(
+        text,
+        startsWith(
+          '[Also in this document: 1 header, 1 footer, 1 comment, '
+          '1 tracked insertion, 1 tracked deletion, 1 equation, 1 image, '
+          '1 chart.]\n\n',
+        ),
+      );
+      for (final line in [
+        'Risk was rated moderate at this review.[comment c1 by Priya Raman]',
+        'The support plan was [inserted i1 by Marcus Bell: approved] '
+            '[deleted d1 by Marcus Bell] by the panel.',
+        'Session attendance over the period was [equation e1].',
+        '[image im1: Family diagram showing the mother, two children and '
+            'the maternal grandmother, who provides after-school care]',
+        '[chart ch1]',
+      ]) {
+        expect(text, contains(line));
+      }
+    });
 
     test('probe.docx: its one footnote is [^1]', () {
       final text = fixture('probe.docx');

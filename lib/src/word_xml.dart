@@ -10,6 +10,12 @@ const _wordNamespaces = {
 const _markupCompatibility =
     'http://schemas.openxmlformats.org/markup-compatibility/2006';
 
+/// Office Math's namespace, transitional and strict.
+const _mathNamespaces = {
+  'http://schemas.openxmlformats.org/officeDocument/2006/math',
+  'http://purl.oclc.org/ooxml/officeDocument/math',
+};
+
 /// The values that turn a toggle property, such as `w:vanish`, off.
 const _off = {'0', 'false', 'off'};
 
@@ -21,6 +27,16 @@ extension WordElement on XmlElement {
       childElements.where((e) => e.isWord && e.name.local == local);
 
   XmlElement? wordChild(String local) => wordChildren(local).firstOrNull;
+
+  /// The first element inside this one named [local], in any namespace:
+  /// for the DrawingML inside a `w:drawing`, which comes in several.
+  XmlElement? descendantNamed(String local) =>
+      descendantElements.where((e) => e.name.local == local).firstOrNull;
+
+  /// The attribute named [local] in any namespace, such as `r:id`, whose
+  /// namespace differs between transitional and strict packages.
+  String? attributeNamed(String local) =>
+      attributes.where((a) => a.name.local == local).firstOrNull?.value;
 
   /// The WordprocessingML attribute named [local], such as `w:val`.
   String? wordAttribute(String local) => attributes
@@ -61,9 +77,24 @@ enum WordRole {
   /// Formatting and layout, which hold no words.
   properties,
 
-  /// Words no longer in the document as it reads now: a tracked deletion,
+  /// Words no longer in the document as it reads now: a moved-away copy,
   /// or a mark that only shows where a line may break.
   removed,
+
+  /// A tracked insertion not yet accepted (`w:ins`).
+  inserted,
+
+  /// A tracked deletion not yet accepted (`w:del`).
+  deleted,
+
+  /// Where a comment's balloon is anchored (`w:commentReference`).
+  commentReference,
+
+  /// An image, a chart or a shape (`w:drawing`).
+  drawing,
+
+  /// An equation (`m:oMath`).
+  equation,
 
   /// A text box's contents: paragraphs inside a run.
   textBox,
@@ -77,10 +108,12 @@ enum WordRole {
 
   static WordRole parse(XmlElement e) {
     if (!e.isWord) {
-      return e.name.namespaceUri == _markupCompatibility &&
-              e.name.local == 'AlternateContent'
-          ? alternatives
-          : other;
+      return switch ((e.name.namespaceUri, e.name.local)) {
+        (_markupCompatibility, 'AlternateContent') => alternatives,
+        (final space?, 'oMath') when _mathNamespaces.contains(space) =>
+          equation,
+        _ => other,
+      };
     }
     return switch (e.name.local) {
       'p' => paragraph,
@@ -105,13 +138,15 @@ enum WordRole {
       'sectPr' ||
       'sdtPr' ||
       'sdtEndPr' => properties,
-      'del' ||
       'moveFrom' ||
       'delText' ||
       'delInstrText' ||
       'softHyphen' ||
-      'sym' ||
-      'commentReference' => removed,
+      'sym' => removed,
+      'ins' => inserted,
+      'del' => deleted,
+      'commentReference' => commentReference,
+      'drawing' => drawing,
       'txbxContent' => textBox,
       _ => other,
     };
