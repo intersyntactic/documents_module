@@ -54,7 +54,7 @@ ToolSpec<ReadDocumentCall, DocumentPassage> readDocumentSpec({
       'answer from only part of a document, tell the user how far you read. '
       'It keeps headings, lists, tables, footnotes and text boxes. A part '
       'it cannot show as words is marked where it sits: [comment c1 by …], '
-      '[equation e1], [chart ch1], [image im1: its alt text], and a tracked '
+      '[equation eq1], [chart ch1], [image im1: its alt text], and a tracked '
       'change nobody has accepted yet as [inserted i1 by …: the new words] '
       'or [deleted d1 by …]. The first line lists these, and any headers and '
       'footers. Their content is not included: a comment, the deleted '

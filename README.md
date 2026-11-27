@@ -45,7 +45,7 @@ The document as a person reading it sees it now, in light Markdown:
 | A comment | `[comment c1 by Priya Raman]` where its balloon is anchored |
 | A tracked insertion not yet accepted | `[inserted i1 by Marcus Bell: approved]` |
 | A tracked deletion not yet accepted | `[deleted d1 by Marcus Bell]` |
-| An equation | `[equation e1]` |
+| An equation | `[equation eq1]` |
 | An image | `[image im1: <its alt text>]`, or `[image im1]` with none |
 | A chart | `[chart ch1]` |
 | Any of those, or a header or footer | one line at the top: `[Also in this document: 1 header, 1 comment, …]` |
