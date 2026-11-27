@@ -8,6 +8,7 @@
   text boxes and notes, numbered in the order the body first refers to
   them. Comments, unaccepted tracked changes, equations, images and charts
   each leave a hole that names the part and its handle (`[comment c1 by
-  …]`), and a line at the top lists them with any headers and footers.
+  …]`, `[equation eq1]`), and a line at the top lists them with any
+  headers and footers. No two kinds of part or note share a handle prefix.
   Hidden text, field instructions and a table of contents left out.
 - `word_text`: prints the text of the `.docx` files named.

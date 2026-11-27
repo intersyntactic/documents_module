@@ -25,7 +25,7 @@ void main() {
     final description = readDocumentSpec().description;
     for (final left in [
       '[comment c1',
-      '[equation e1]',
+      '[equation eq1]',
       '[chart ch1]',
       '[image im1',
       '[inserted i1',

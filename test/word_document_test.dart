@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 import 'package:is_documents_module/is_documents_module.dart';
+import 'package:is_documents_module/src/word_text.dart' show WordNote, WordPart;
 import 'package:test/test.dart';
 
 const _w = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -88,6 +89,15 @@ void main() {
   });
 
   group('parts the text leaves out, each a hole that names it', () {
+    test('no two kinds of part or note share a handle prefix', () {
+      final prefixes = [
+        for (final part in WordPart.values)
+          if (part.handle.isNotEmpty) part.handle,
+        for (final note in WordNote.values) note.marker,
+      ];
+      expect(prefixes.toSet(), hasLength(prefixes.length));
+    });
+
     test('a tracked change: the insertion marked with its text, the '
         'deletion a hole', () {
       expect(
@@ -148,7 +158,7 @@ void main() {
           ),
         ),
         '[Also in this document: 1 equation, 2 images, 1 chart.]\n\n'
-        'Attendance was [equation e1].\n\n'
+        'Attendance was [equation eq1].\n\n'
         '[image im1: Family diagram]\n\n'
         '[image im2]\n\n'
         '[chart ch1]',
@@ -421,7 +431,7 @@ void main() {
         'Risk was rated moderate at this review.[comment c1 by Priya Raman]',
         'The support plan was [inserted i1 by Marcus Bell: approved] '
             '[deleted d1 by Marcus Bell] by the panel.',
-        'Session attendance over the period was [equation e1].',
+        'Session attendance over the period was [equation eq1].',
         '[image im1: Family diagram showing the mother, two children and '
             'the maternal grandmother, who provides after-school care]',
         '[chart ch1]',

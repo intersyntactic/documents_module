@@ -31,14 +31,16 @@ enum WordNote {
 
 /// A part of a document whose content the text does not hold, in the order
 /// the line at the top lists them. Each one in the body is numbered by
-/// kind, in reading order, behind its handle: `c1`, `d2`, `im1`.
+/// kind, in reading order, behind its handle: `c1`, `d2`, `im1`. No two
+/// kinds, notes included, share a prefix, since a model copies a handle
+/// from the text into a tool and must not land on another kind's part.
 enum WordPart {
   header('', 'header', 'headers'),
   footer('', 'footer', 'footers'),
   comment('c', 'comment', 'comments'),
   insertion('i', 'tracked insertion', 'tracked insertions'),
   deletion('d', 'tracked deletion', 'tracked deletions'),
-  equation('e', 'equation', 'equations'),
+  equation('eq', 'equation', 'equations'),
   image('im', 'image', 'images'),
   chart('ch', 'chart', 'charts');
 
@@ -56,7 +58,7 @@ enum WordPart {
 /// A part whose content is not words, or not yet settled, leaves a hole
 /// that names it and its handle: `[comment c1 by Priya Raman]`,
 /// `[deleted d1 by Marcus Bell]`, `[inserted i1 by Marcus Bell: approved]`,
-/// `[equation e1]`, `[image im1: <alt text>]`, `[chart ch1]`.
+/// `[equation eq1]`, `[image im1: <alt text>]`, `[chart ch1]`.
 ///
 /// Left out: hidden text, field instructions, a table of contents,
 /// formatting, and the second copy of anything Word stores twice.
