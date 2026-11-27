@@ -11,7 +11,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:is_documents_module/is_documents_module.dart';
-import 'package:is_effects/is_effects.dart';
+import 'package:is_sign_in_vocabulary/is_sign_in_vocabulary.dart';
 
 void main(List<String> args) {
   final files = switch (args) {
