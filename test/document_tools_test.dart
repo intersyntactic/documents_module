@@ -1,5 +1,5 @@
 import 'package:is_documents_module/is_documents_module.dart';
-import 'package:is_tools_api/is_tools_api.dart';
+import 'package:is_tool_definition_vocabulary/is_tool_definition_vocabulary.dart';
 import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;

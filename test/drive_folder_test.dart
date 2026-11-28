@@ -4,10 +4,10 @@ import 'dart:typed_data';
 import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_documents_module/is_documents_module.dart';
 import 'package:is_effects/is_effects.dart';
-import 'package:is_conversation_reply_vocabulary/is_conversation_reply_vocabulary.dart';
+import 'package:is_conversation_vocabulary/is_conversation_vocabulary.dart';
 import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:is_model_vocabulary/is_model_vocabulary.dart';
-import 'package:is_tools_api/is_tools_api.dart';
+import 'package:is_tool_definition_vocabulary/is_tool_definition_vocabulary.dart';
 import 'package:is_web_address_vocabulary/is_web_address_vocabulary.dart'
     show PathPrefix;
 import 'package:test/test.dart';
