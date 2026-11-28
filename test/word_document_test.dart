@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:is_document_part_vocabulary/is_document_part_vocabulary.dart';
 import 'package:is_documents_module/is_documents_module.dart';
 import 'package:is_documents_module/src/word_text.dart' show WordNote, WordPart;
 import 'package:test/test.dart';
@@ -91,11 +92,16 @@ void main() {
   group('parts the text leaves out, each a hole that names it', () {
     test('no two kinds of part or note share a handle prefix', () {
       final prefixes = [
-        for (final part in WordPart.values)
-          if (part.handle.isNotEmpty) part.handle,
+        for (final kind in DocumentPartKind.values) kind.prefix,
         for (final note in WordNote.values) note.marker,
       ];
       expect(prefixes.toSet(), hasLength(prefixes.length));
+    });
+
+    test('every kind of handle is one kind of Word part', () {
+      expect([
+        for (final part in WordPart.values) ?part.kind,
+      ], unorderedEquals(DocumentPartKind.values));
     });
 
     test('a tracked change: the insertion marked with its text, the '

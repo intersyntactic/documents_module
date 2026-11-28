@@ -53,7 +53,10 @@ The document as a person reading it sees it now, in light Markdown:
 A part whose content isn't in the text leaves a hole that names it, so a
 reader knows something is there rather than reading past a gap. Each is
 numbered by kind in reading order (`c1`, `c2`, `d1`), as a handle for a
-tool that reads that part.
+tool that reads that part. A handle is a `DocumentPartHandle` from
+[is_document_part_vocabulary](https://pub.dev/packages/is_document_part_vocabulary),
+which fixes its spelling. A reader of one part has to count in this
+reading order too.
 
 Left out entirely: hidden text, field instructions, a table of contents (it
 only repeats the headings), formatting, and the fallback copy Word stores of

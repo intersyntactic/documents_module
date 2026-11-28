@@ -185,6 +185,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  is_document_part_vocabulary:
+    dependency: "direct main"
+    description:
+      name: is_document_part_vocabulary
+      sha256: "2cb7a7d23a70f97056a78d12deffc368fd52dad4757c2e2e724d875b67e119fc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   is_file_request_vocabulary:
     dependency: "direct dev"
     description:
