@@ -1,3 +1,4 @@
+import 'package:is_document_part_vocabulary/is_document_part_vocabulary.dart';
 import 'package:xml/xml.dart';
 
 import 'word_numbering.dart';
@@ -30,23 +31,22 @@ enum WordNote {
 }
 
 /// A part of a document whose content the text does not hold, in the order
-/// the line at the top lists them. Each one in the body is numbered by
-/// kind, in reading order, behind its handle: `c1`, `d2`, `im1`. No two
-/// kinds, notes included, share a prefix, since a model copies a handle
-/// from the text into a tool and must not land on another kind's part.
+/// the line at the top lists them. Each one in the body has a handle of its
+/// [kind], numbered in reading order: `c1`, `d2`, `im1`. Headers and
+/// footers have none.
 enum WordPart {
-  header('', 'header', 'headers'),
-  footer('', 'footer', 'footers'),
-  comment('c', 'comment', 'comments'),
-  insertion('i', 'tracked insertion', 'tracked insertions'),
-  deletion('d', 'tracked deletion', 'tracked deletions'),
-  equation('eq', 'equation', 'equations'),
-  image('im', 'image', 'images'),
-  chart('ch', 'chart', 'charts');
+  header(null, 'header', 'headers'),
+  footer(null, 'footer', 'footers'),
+  comment(.comment, 'comment', 'comments'),
+  insertion(.insertion, 'tracked insertion', 'tracked insertions'),
+  deletion(.deletion, 'tracked deletion', 'tracked deletions'),
+  equation(.equation, 'equation', 'equations'),
+  image(.image, 'image', 'images'),
+  chart(.chart, 'chart', 'charts');
 
-  const WordPart(this.handle, this.one, this.many);
+  const WordPart(this.kind, this.one, this.many);
 
-  final String handle;
+  final DocumentPartKind? kind;
   final String one;
   final String many;
 }
@@ -76,7 +76,10 @@ final class WordText {
   final Map<String, String> commentAuthors;
 
   final _fields = <_Field>[];
-  final _parts = <WordPart, int>{};
+  final _headersAndFooters = <WordPart, int>{};
+
+  /// The last handle given out of each kind, so the next is one more.
+  final _lastHandles = <DocumentPartKind, DocumentPartHandle>{};
 
   /// Each comment's author, by its `w:id`, from `comments.xml`.
   static Map<String, String> authorsOf(XmlDocument? comments) => {
@@ -95,7 +98,7 @@ final class WordText {
   String? get alsoInDocument {
     final counted = [
       for (final part in WordPart.values)
-        if (_parts[part] case final n? when n > 0)
+        if (_count(part) case final n when n > 0)
           '$n ${n == 1 ? part.one : part.many}',
     ];
     return counted.isEmpty
@@ -103,11 +106,18 @@ final class WordText {
         : '[Also in this document: ${counted.join(', ')}.]';
   }
 
-  /// Counts one more [part], and returns its handle, such as `c2`.
-  String _next(WordPart part) {
-    final n = _parts[part] = (_parts[part] ?? 0) + 1;
-    return '${part.handle}$n';
-  }
+  /// How many of [part] the document holds, as read so far.
+  int _count(WordPart part) => switch (part.kind) {
+    final kind? => _lastHandles[kind]?.number ?? 0,
+    null => _headersAndFooters[part] ?? 0,
+  };
+
+  /// The handle of the next part of [kind] in reading order, such as `c2`.
+  DocumentPartHandle _next(DocumentPartKind kind) =>
+      _lastHandles[kind] = switch (_lastHandles[kind]) {
+        final last? => last.next,
+        null => DocumentPartHandle.first(kind),
+      };
 
   static String _by(String? author) =>
       author == null || author.isEmpty ? '' : ' by $author';
@@ -136,7 +146,8 @@ final class WordText {
   /// Read before [notes], which numbers the notes from the references here.
   String body(XmlElement body) {
     _fields.clear();
-    _parts.clear();
+    _headersAndFooters.clear();
+    _lastHandles.clear();
     _footnoteNumbers.clear();
     _endnoteNumbers.clear();
     for (final (part, reference) in [
@@ -149,7 +160,7 @@ final class WordText {
         for (final e in body.descendantElements)
           if (e.isWord && e.name.local == reference) e.attributeNamed('id'),
       }..remove(null);
-      if (ids.isNotEmpty) _parts[part] = ids.length;
+      if (ids.isNotEmpty) _headersAndFooters[part] = ids.length;
     }
     return _join(_blocks(body));
   }
@@ -316,31 +327,31 @@ final class WordText {
           _inline(child, inserted, inside);
         }
         if (inserted.isNotEmpty) {
-          final handle = _next(WordPart.insertion);
+          final handle = _next(.insertion);
           words.write(
             '[inserted $handle${_by(e.wordAttribute('author'))}: $inserted]',
           );
         }
       case WordRole.deleted:
         if (_visible) {
-          final handle = _next(WordPart.deletion);
+          final handle = _next(.deletion);
           words.write('[deleted $handle${_by(e.wordAttribute('author'))}]');
         }
       case WordRole.commentReference:
         if (_visible) {
-          final handle = _next(WordPart.comment);
+          final handle = _next(.comment);
           final author = commentAuthors[e.wordAttribute('id')];
           words.write('[comment $handle${_by(author)}]');
         }
       case WordRole.equation:
-        if (_visible) words.write('[equation ${_next(WordPart.equation)}]');
+        if (_visible) words.write('[equation ${_next(.equation)}]');
       case WordRole.drawing:
         final shows = e.descendantNamed('graphicData')?.getAttribute('uri');
         final alt = e.descendantNamed('docPr')?.getAttribute('descr')?.trim();
         switch (shows) {
           case final uri? when uri.endsWith('/picture'):
             if (_visible) {
-              final handle = _next(WordPart.image);
+              final handle = _next(.image);
               words.write(
                 alt == null || alt.isEmpty
                     ? '[image $handle]'
@@ -348,7 +359,7 @@ final class WordText {
               );
             }
           case final uri? when uri.endsWith('/chart'):
-            if (_visible) words.write('[chart ${_next(WordPart.chart)}]');
+            if (_visible) words.write('[chart ${_next(.chart)}]');
           default:
             // A shape or text box: read for the words it holds.
             children();
