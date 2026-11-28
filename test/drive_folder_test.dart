@@ -89,7 +89,8 @@ final class _WebDriver implements CarriesOutEachProgram {
   ) => null;
 
   @override
-  Future<Outcome<ModelReply>>? askTheModel(ModelCallNamingRequestEntry call) => null;
+  Future<Outcome<ModelReply>>? askTheModel(ModelCallNamingRequestEntry call) =>
+      null;
 
   @override
   Future<Outcome<List<PostedMessage>>>? replyToOwnConversation(
