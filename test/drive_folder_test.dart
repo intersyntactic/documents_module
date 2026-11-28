@@ -3,13 +3,17 @@ import 'dart:typed_data';
 
 import 'package:is_airlock_api/is_airlock_api.dart';
 import 'package:is_documents_module/is_documents_module.dart';
-import 'package:is_effects/is_effects.dart';
 import 'package:is_conversation_vocabulary/is_conversation_vocabulary.dart';
+import 'package:is_file_request_vocabulary/is_file_request_vocabulary.dart';
 import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:is_model_vocabulary/is_model_vocabulary.dart';
+import 'package:is_outcome_vocabulary/is_outcome_vocabulary.dart';
+import 'package:is_program_request_vocabulary/is_program_request_vocabulary.dart';
+import 'package:is_relative_path_vocabulary/is_relative_path_vocabulary.dart';
 import 'package:is_tool_definition_vocabulary/is_tool_definition_vocabulary.dart';
 import 'package:is_web_address_vocabulary/is_web_address_vocabulary.dart'
     show PathPrefix;
+import 'package:is_web_request_vocabulary/is_web_request_vocabulary.dart';
 import 'package:test/test.dart';
 
 import 'word_document_test.dart' show docx, p, r;
@@ -85,7 +89,8 @@ final class _WebDriver implements CarriesOutEachProgram {
   ) => null;
 
   @override
-  Future<Outcome<ModelReply>>? askTheModel(ModelCall call) => null;
+  Future<Outcome<ModelReply>>? askTheModel(ModelCallNamingRequestEntry call) =>
+      null;
 
   @override
   Future<Outcome<List<PostedMessage>>>? replyToOwnConversation(
