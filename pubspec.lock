@@ -53,10 +53,10 @@ packages:
     dependency: transitive
     description:
       name: checked_json
-      sha256: "0538c8336bfcac44a0ee6f652205ec63bc53f05a5918ca628e4e5b005bbf6f28"
+      sha256: f945a6154f5737707c35f901dd37a7c5d3bc8a8a4dc2104f55abb68745b84a77
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.0"
   cli_config:
     dependency: transitive
     description:
@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: is_airlock_api
-      sha256: f0aa9040aca43e888812636834311e6e33a3a1d9b415a60ec167418058684f7e
+      sha256: ec8889ce9113ccdcb014cb4ba932d94f1a5e038dc9a55fc87be06aef9801cd3f
       url: "https://pub.dev"
     source: hosted
-    version: "0.24.0"
+    version: "0.25.0"
   is_content_id:
     dependency: transitive
     description:
@@ -181,34 +181,34 @@ packages:
     dependency: "direct dev"
     description:
       name: is_conversation_vocabulary
-      sha256: b252a0b7254cf40142c353cdb68e8d926b579021c27033922f3a624204b4c27f
+      sha256: "743fa993dc7b7194a507dec64c2df3b8e025243272776b21af5c55736db3f445"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.2.0"
   is_effects:
     dependency: "direct main"
     description:
       name: is_effects
-      sha256: c03f9ba98bdc717846f79dcf4a10edadaa1397e2019f025aa85187fbf3925b49
+      sha256: "7fbcde3af0d2a77dd6c39e517167e473ad711daae0423588df72c9c715cb6177"
       url: "https://pub.dev"
     source: hosted
-    version: "0.18.0"
+    version: "0.19.0"
   is_flight_rules:
     dependency: "direct main"
     description:
       name: is_flight_rules
-      sha256: e11722414870edd7b632461f6b6342e8e151dfd9f87d71f43a680a1aa4f154ec
+      sha256: "1282216c406e9fa3986f04798cf0a3ec82288404c63e062a550f958c22baa2d5"
       url: "https://pub.dev"
     source: hosted
-    version: "0.10.0"
+    version: "0.11.0"
   is_model_vocabulary:
     dependency: "direct dev"
     description:
       name: is_model_vocabulary
-      sha256: "509e34dfff4058715d21bb506ef95a9bf14c82779b1001a8e25933a8e0a0535f"
+      sha256: "10f98c4205552175128cefc1bf95dd93bd969d2018867b36878ee0af5fee10c2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.4.0"
   is_path_confinement:
     dependency: transitive
     description:
@@ -237,18 +237,18 @@ packages:
     dependency: "direct main"
     description:
       name: is_tool
-      sha256: "4028bb84790912f82bda1d1dac46ef8c20977599f4838e27b7cb01d53111a48d"
+      sha256: c4f79c96264ba33f04cd74da3cb0457d32b8f15ad8936b3ba6a00ff4ac4af5d9
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.0"
+    version: "0.14.0"
   is_tool_definition_vocabulary:
     dependency: "direct main"
     description:
       name: is_tool_definition_vocabulary
-      sha256: "3880670fabd908abdf3884fbd3e783da904cfd4ecd8fb34b9aa52175f8c08e77"
+      sha256: "2fd61c836709fe5182732bb03a26f4fc57fc7191d6bfcedc3c4ff070f322982c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0"
+    version: "0.7.0"
   is_web_address_vocabulary:
     dependency: "direct dev"
     description:
