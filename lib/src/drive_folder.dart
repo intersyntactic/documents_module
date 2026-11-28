@@ -1,8 +1,8 @@
 import 'package:is_airlock_api/is_airlock_api.dart';
-import 'package:is_effects/is_effects.dart';
 import 'package:is_flight_rules/is_flight_rules.dart';
 import 'package:is_tool/is_tool.dart';
 import 'package:is_tool_definition_vocabulary/is_tool_definition_vocabulary.dart';
+import 'package:is_web_request_vocabulary/is_web_request_vocabulary.dart';
 
 import 'document_tools.dart';
 import 'folder_listing.dart';
