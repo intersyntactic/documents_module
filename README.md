@@ -114,7 +114,7 @@ tool's result from the logbook.
 
 ## The listing as a tool sent as data
 
-`files.listingTool` is `list_documents` as an is_tools_api `OneActionTool`,
+`files.listingTool` is `list_documents` as an is_tool_definition_vocabulary `OneActionTool`,
 stage 1 of tools as data: no input, and one `Fetch` of the folder's listing
 as the sign-in, whose JSON the model reads as Graph sent it. Its description
 says it returns the first page only, and that `@odata.nextLink` in the

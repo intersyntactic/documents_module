@@ -1,4 +1,4 @@
-import 'package:is_tools_api/is_tools_api.dart';
+import 'package:is_tool_definition_vocabulary/is_tool_definition_vocabulary.dart';
 
 import 'document_name.dart';
 
